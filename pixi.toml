@@ -1,0 +1,24 @@
+[workspace]
+authors = ["clami66 <claudio.mirabello@scilifelab.se>"]
+channels = ["conda-forge"]
+name = "workshop_nn_dl"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.14.3,<3.15"
+
+[environments]
+teachers = []
+basics = ["rise-jupyter"]
+
+[pypi-dependencies]
+torch = ">=2.10.0, <3"
+jupyter = ">=1.1.1, <2"
+matplotlib = ">=3.10.8, <4"
+
+[feature.rise-jupyter.pypi-dependencies]
+jupyterlab_rise = "*"
+
