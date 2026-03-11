@@ -10,6 +10,7 @@ version = "0.1.0"
 [dependencies]
 python = ">=3.13.0,<3.14"
 curl = ">=8.19.0,<9"
+git = ">=2.53.0,<3"
 
 [environments]
 teachers = []
