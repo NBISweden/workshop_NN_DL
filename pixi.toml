@@ -14,7 +14,7 @@ git = ">=2.53.0,<3"
 
 [environments]
 teachers = []
-basics = ["rise-jupyter"]
+basics = ["rise-jupyter", "quarto"]
 
 [pypi-dependencies]
 torch = ">=2.10.0, <3"
