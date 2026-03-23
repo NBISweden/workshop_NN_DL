@@ -23,4 +23,5 @@ matplotlib = ">=3.10.8, <4"
 
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
+jupytext = ">=1.19.1, <2"
 
