@@ -24,3 +24,6 @@ matplotlib = ">=3.10.8, <4"
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
 
+[feature.quarto.dependencies]
+quarto = "*"
+
