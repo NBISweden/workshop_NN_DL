@@ -31,6 +31,9 @@ torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
 
+[feature.quarto.dependencies]
+quarto = "*"
+
 [environments]
 teachers = ["torch"]
 basics = ["torch", "rise-jupyter"]
