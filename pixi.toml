@@ -5,8 +5,6 @@ name = "workshop_nn_dl"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[tasks]
-
 [dependencies]
 python = ">=3.13.0,<3.14"
 curl = ">=8.19.0,<9"
@@ -15,6 +13,7 @@ git = ">=2.53.0,<3"
 [environments]
 teachers = []
 basics = ["rise-jupyter"]
+jupytext = ["jupytext"]
 
 [pypi-dependencies]
 torch = ">=2.10.0, <3"
@@ -23,4 +22,18 @@ matplotlib = ">=3.10.8, <4"
 
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
+jupytext = "*"
+
+[feature.jupytext.dependencies]
+jupytext = "*"
+
+[tasks.jlab]
+args = [{ "arg" = "port", default = "8888" }]
+cmd = "jupyter lab --port {{port}}"
+default-environment = "jupytext"
+
+[tasks.qpv]
+args = [{ "arg" = "port", default = "8889" }]
+cmd = "quarto preview juptext/notebook.qmd --port {{port}}"
+default-environment = "jupytext"
 

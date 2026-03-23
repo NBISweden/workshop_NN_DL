@@ -1,0 +1,50 @@
+---
+title: Jupytext
+author: Per Unneberg
+date: March 23, 2026
+format:
+  html:
+    code-fold: true
+description: Example of a Jupytext notebook
+execute:
+  eval: true
+jupyter:
+  jupytext:
+    formats: ipynb,qmd:quarto
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.19.1
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+# Example notebook
+
+Fire up JupyterLab, either with `jupyter lab`, or with a [pixi
+task](https://pixi.prefix.dev/latest/workspace/advanced_tasks/) which
+are really convenient for creating shorthands for project management.
+Here, the task name is `jlab` and is run with the command `pixi run
+jlab` (or shorter still `pixi r jlab`). In the JupyterLab session,
+open `jupytext/notebook.qmd` and activate notebook pairing with `File
+-> Jupytext -> Pair Notebook with ipynb document`. If you then save
+the `qmd` file, a `ipynb` notebook file will be generated on the fly.
+
+Edit the Jupytext file in your favorite IDE or editor; the [VS Code
+extension](https://jupytext.readthedocs.io/en/latest/vs-code.html)
+should obviate the need of an open JupyterLab session. If you do test
+code in JupyterLab, you (unfortunately) have to reload the notebook
+everytime you make changes to the text file. You can get live previews
+of the html version of the notebook by running another predefined pixi
+task, namely `pixi r qpv`.
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+plt.plot(x, y)
+```
