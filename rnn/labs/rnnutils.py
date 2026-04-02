@@ -10,57 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import MinMaxScaler
 
 font = {"size": 12}
 matplotlib.rc("font", **font)
-
-
-def make_train_test(data, train_fraction=0.67, rescale=True):
-    """Create train and test data set from a data vector.
-
-    Args:
-      data (np.array): data array
-      train_fraction (float): fraction of data devoted to training
-
-    Returns:
-      (train, test, data): 3-tuple of train, test, and original data
-    """
-    split = int(len(data) * train_fraction)
-    if rescale:
-        scaler = MinMaxScaler(feature_range=(0, 1))
-    else:
-        scaler = MinMaxScaler(feature_range=(min(data), max(data)))
-    data = scaler.fit_transform(data).flatten()
-    train = data[range(split)]
-    test = data[split:]
-    return train, test, scaler
-
-
-def make_xy(data, window_size=1, step_size=1):
-    """Create X, Y data pairs from a dataset vector.
-
-    Args:
-      data (float, int): dataset vector
-      window_size (int): window size; number of dataset points looking back
-      step_size (int): step size between windows
-
-    Returns:
-      (X, Y): X, Y data pair
-    """
-    X_indices = []
-    X = []
-    Y_indices = np.arange(window_size, len(data), step_size)
-    Y = data[Y_indices]
-    j = 0
-    for i, _ in enumerate(Y_indices):
-        ind = list(range(j, j + window_size))
-        j = j + step_size
-        X_indices.append(ind)
-        X.append(data[ind])
-    X = np.reshape(np.array(X), (len(Y), window_size, 1))
-    return X, Y, np.array(X_indices), Y_indices
-
 
 def plot_pred(data, scaler=None, rmse=True, plotmarkers=False, show=True, **kw):
     """Plot prediction and original data"""
@@ -102,6 +54,18 @@ def plot_pred(data, scaler=None, rmse=True, plotmarkers=False, show=True, **kw):
         plt.show()
 
 
+def plot_loss(metrics, fig_size=(12, 6)):
+    """Plot loss metrics"""
+    fig, ax = plt.subplots(figsize=fig_size)
+    ax.plot(metrics["loss"], label="train loss", color="red", alpha=0.8)
+    ax.plot(metrics["val_loss"], label="val loss", color="orange", alpha=0.8)
+    ax.set_title("model loss")
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("loss")
+    ax.legend()
+    plt.show()
+
+        
 def plot_loss_acc(metrics, fig_width=12, fig_height=6):
     """Plot loss and accuracy metrics"""
     accuracy = "accuracy"
@@ -162,18 +126,3 @@ def plot_history(history, show=True, xlim=None, ylim=None, **kw):
     ax.legend(list(labels), loc="upper left")
     if show:
         plt.show()
-
-
-def airlines():
-    """Load and reformat airlines data set"""
-    fn = "airline-passengers.csv"
-    url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/{fn}"
-    if not os.path.exists(fn):
-        print(f"Download airline passenger data: 'wget {url} --no-check-certificate'")
-        sys.exit(1)
-    df = pd.read_csv(fn)
-    df = df.rename(columns={"Month": "time", "Passengers": "passengers"})
-    df["time"] = pd.to_datetime(df["time"], format="%Y-%m")
-    df["year"] = pd.DatetimeIndex(df["time"]).year  # pylint: disable=E1101
-    df["month"] = pd.DatetimeIndex(df["time"]).month  # pylint: disable=E1101
-    return df

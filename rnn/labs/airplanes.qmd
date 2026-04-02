@@ -1,22 +1,41 @@
 ---
-title: Preparations
-jupyter: python3
+title: "Lab session: predicting time series"
+jupyter:
+  jupytext:
+    formats: ipynb,qmd:quarto
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.19.1
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+format:
+  html:
+    code-fold: true
+description: Airplanes lab
 execute:
-  eval: false
+  eval: true
 ---
 
+```{python }
 
+```
 
 ## Running on colab
 
 You can use this
-[link](https://colab.research.google.com/github/NBISweden/workshop-neural-nets-and-deep-learning/blob/rnn_labs/session_recurrentNeuralNetworks/lab_airplane_rnn/airplanes.ipynb)
+[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/rnn/labs/airplanes.ipynb)
 to run the notebook on Google Colab. If you do so, it's advised that
 you first make a copy to your own Google Drive before starting your
 work on the notebook. Otherwise changes you make to the notebook will
 not be saved.
 
-## Configuration
+## Preparation
+
+### Configuration
 
 Execute the following code blocks to configure the session and import
 relevant modules.
@@ -34,228 +53,59 @@ import sys
 import math 
 import numpy as np
 import pandas as pd
-from keras.models import Sequential
-from keras.layers import Dense, SimpleRNN, LSTM, GRU
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+import rnnutils
 ```
 
-## Utility functions
+## Lab session: predicting airline passengers
 
-In order to save time, here are some utility functions that will be used further down to deal with partitioning of data and plotting history and loss functions. Execute the code blocks to make the functions accessible.
+### Aims
 
+In this lab the idea is to try out different RNN models on the Box &
+Jenkins monthly airline passengers dataset. The dataset is a monthly
+time series of airline passengers recorded in the 50'ies and 60'ies.
+Your task is to build a model to make a future prediction of the
+number of passengers given a number of observation.
 
-`make_xy` creates `X`, `Y` data pairs from a dataset vector to be used for testing and training, as well as the vector indices relative to the input data. The indices correspond to months and are used for plotting purposes.
+You will download data and prepare it for later analyses. More
+specifically, you will partition the data into a training and test
+set. In order to create input / label pairs (X/Y), the data is split
+into time slices, where a slice corresponds to the input (X) and the
+consecutive time point the (known) output (Y).
 
-```{python}
-def make_xy(data, window_size=1, step_size=1):
-    """Create X, Y data pairs from a dataset vector.
-
-    Args:
-      data (float, int): dataset vector
-      window_size (int): window size; number of dataset points looking back
-      step_size (int): step size between windows
-
-    Returns:
-      (X, Y, X_indices, Y_indices): 4-tuple consisting of X and Y data vectors and indices 
-         of data points (needed for plotting).
-    """
-    X_indices = []
-    X = []
-    Y_indices = np.arange(window_size, len(data), step_size)
-    Y = data[Y_indices]
-    j = 0
-    for i, _ in enumerate(Y_indices):
-        ind = list(range(j, j + window_size))
-        j = j + step_size
-        X_indices.append(ind)
-        X.append(data[ind])
-    X = np.reshape(np.array(X), (len(Y), window_size, 1))
-    return X, Y, np.array(X_indices), Y_indices
-```
-
-`plot_pred` plots the original data along with prediction.
-
-```{python}
-def plot_pred(data, scaler=None, rmse=True, plotmarkers=False, show=True, **kw):
-    """Plot prediction and original data
-
-    Args:
-      data (dict): dictionary where each key points to a 3-tuple consisting of 
-        prediction, original data, and indices of prediction relative to original data
-      scaler (Scaler): Scaler object to inverse transform data to original scale or None
-      rmse (bool): include RMSE
-      plotmarkers (bool): add markers to line plots for clarity
-      show (bool): show plot
-      kw (dict): keyword args passed to plt.subplots
-
-    Returns:
-      None
-    """
-    ticks = kw.pop("ticks", None)
-    labels = kw.pop("labels", None)
-    fig, ax = plt.subplots(**kw)
-    legend = []
-    markers = ["*", "x", "o"]
-    colors = ["black", "steelblue", "darkred", "green"]
-    x = []
-    y = []
-    shift = 0
-    for k, v in data.items():
-        if v is None:
-            continue
-        Ypred, Y, Y_indices = v
-        X = np.arange(len(Y)) + shift
-        shift = shift + len(X)
-        if scaler is not None:
-            Y = scaler.inverse_transform(Y.reshape(-1, 1)).flatten()
-            Ypred = scaler.inverse_transform(Ypred.reshape(-1, 1)).flatten()
-        e = math.sqrt(mean_squared_error(Y[Y_indices], Ypred))
-        if rmse:
-            k = f"{k} (RMSE: {e:.4f})"
-        legend.append(k)
-        col = colors.pop()
-        ax.plot(X[Y_indices], Ypred, color=col)
-        if plotmarkers:
-            ax.plot(X[Y_indices], Ypred, markers.pop(), color=col)
-        x.extend(X)
-        y.extend(Y)
-    legend.append("Data")
-    ax.plot(x, y, "-", color=colors.pop())
-    ax.set_title("Model prediction")
-    if ticks is not None and labels is not None:
-        ax.set_xticks(ticks, labels=labels)
-    ax.legend(legend)
-    if show:
-        plt.show()
-```
-
-`plot_loss_acc` plots loss and accuracy of history.
-
-```{python}
-def plot_loss_acc(history):
-    """Plot loss and accuracy of history
-
-    Args:
-      history (keras.src.callbacks.History): model history
-    """
-    try:
-        plt.plot(history.history["accuracy"])
-        plt.plot(history.history["val_accuracy"])
-    except KeyError:
-        plt.plot(history.history["acc"])
-        plt.plot(history.history["val_acc"])
-
-    plt.plot(history.history["loss"])
-    plt.plot(history.history["val_loss"])
-    plt.title("model accuracy")
-    plt.ylabel("accuracy")
-    plt.xlabel("epoch")
-    plt.legend(["train acc", "val acc", "train loss", "val loss"], loc="upper left")
-    plt.show()
-```
-
-`plot_history` plots the training and/or test accuracy or loss values.
-
-```{python}
-def plot_history(history, show=True, xlim=None, ylim=None, **kw):
-    """Plot history - plot training and/or test accuracy or loss values
-    
-    Args:
-      history (keras.src.callbacks.History): model history
-      show (bool): show plot
-      xlim (tuple): tuple of min, max x values
-      ylim (tuple): tuple of min, max y values
-      kw (dict): keyword args passed to plt.subplots
-      
-    """
-    datalabels = ["Training", "Validation"]
-    metrics_labels = {
-        "loss": "loss",
-        "acc": "accuracy",
-        "accuracy": "accuracy",
-        "mse": "mse",
-        "recall": "recall",
-    }
-    if not isinstance(history, dict):
-        history = history.history
-    hkeys = history.keys()
-    h = np.array([history[k] for k in hkeys])
-    labels = [
-        f"{x} {y}"
-        for x, y in zip(
-            [datalabels[u.startswith("val_")] for u in hkeys],
-            [metrics_labels[v.replace("val_", "")] for v in hkeys],
-        )
-    ]
-    fig, ax = plt.subplots(**kw)
-    ax.plot(np.array(range(0, h.shape[1])), h.T)
-    ax.set_title("Model metrics")
-    ax.set_ylabel("Metric")
-    ax.set_xlabel("Epoch")
-    if xlim is not None:
-        ax.set_xlim(xlim)
-    if ylim is not None:
-        ax.set_ylim(ylim)
-    ax.legend(list(labels), loc="upper left")
-    if show:
-        plt.show()
-```
-
-Finally, `make_train_test` splits data input into a train and test dataset. The function is actually not used below; rather, each step of the function is included as an explicit step. Nevertheless, we show the function here for reference as it was mentioned in the lecture.
-
-```{python}
-def make_train_test(data, train_fraction=0.67, rescale=True):
-    """Create train and test data set from a data vector.
-
-    Args:
-      data (np.array): data array
-      train_fraction (float): fraction of data devoted to training
-      rescale (bool): rescale data to range 0, 1, else use min-max range of data
-
-    Returns:
-      (train, test, data): 3-tuple of train, test, and original data
-    """
-    split = int(len(data) * train_fraction)
-    if rescale:
-        scaler = MinMaxScaler(feature_range=(0, 1))
-    else:
-        scaler = MinMaxScaler(feature_range=(min(data), max(data)))
-    data = scaler.fit_transform(data).flatten()
-    train = data[range(split)]
-    test = data[split:]
-    return train, test, scaler
-```
-
-# Lab session: predicting airline passengers
-
-## Aims
-
-In this lab the idea is to try out different RNN models on the Box & Jenkins monthly airline passengers dataset. The dataset is a monthly time series of airline passengers recorded in the 50'ies and 60'ies. Your task is to build a model to make a future prediction of the number of passengers given a number of observation.
-
-You will download data and prepare it for later analyses. More specifically, you will partition the data into a training and test set. In order to create input / label pairs (X/Y), the data is split into time slices, where a slice corresponds to the input (X) and the consecutive time point the (known) output (Y).
-
-
-To help you along the way, some of the steps have been prepared in advance, but in most cases, your task is to complete missing code. Don't hesitate to change parameter settings and experiment with the model architectures. Also, make sure to examine the contents of variables by printing them. Things to try:
+To help you along the way, some of the steps have been prepared in
+advance, but in most cases, your task is to complete missing code.
+Don't hesitate to change parameter settings and experiment with the
+model architectures. Also, make sure to examine the contents of
+variables by printing them. Things to try:
 
 - change the number of time steps
 - change the number of epoch
-- experiment with the network topology (e.g. number of units in the hidden layer)
+- experiment with the network topology (e.g. number of units in the
+  hidden layer)
 
 See if you can improve on the model presented in the lecture.
 
-# Session 1: Vanilla RNN
+## Session 1: Vanilla RNN
 
-## Download data
+### Download data
 
 Start by downloading the data and loading it into a pandas dataframe:
 
 ```{python}
-!wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/airline-passengers.csv --no-check-certificate
+%%bash
+if [ ! -e airline-passengers.csv ]; then
+    wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/airline-passengers.csv --no-check-certificate
+fi
 ```
 
-We modify the data somewhat for easier processing. `df.head()` simply shows you the first entries of the data frame.
+We modify the data somewhat for easier processing. `df.head()` simply
+shows you the first entries of the data frame.
 
 ```{python}
 df = pd.read_csv('airline-passengers.csv')
@@ -272,92 +122,306 @@ Plot the data for overview:
 plt.plot(df.time, df.passengers)
 ```
 
-## Create training and test data
+### Custom dataset class
 
-Next, we partition the data into training and test data sets. We first define the size of the training set and the index at which to split the data.
+PyTorch provides [two data
+primitives](https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html)
+(`Dataset` and `DataLoader`) that aim to make processing and handling
+of data easier. We will create a custom dataset class that will store
+data and scale data to a given range (typically between 0 and 1); many
+machine learning algorithms work better when features are on similar
+scales. However, since we want to partition our data for training and
+testing, we need to take care apply the same scaling for the test data
+as we did for the train data. Here is a dataset class with this
+functionality:
+
+```{python }
+class PassengerDataset(Dataset):
+    def __init__(self, data, time=None,
+                 window_size=1, step_size=1,
+                 scaler=None):
+        self.unscaled = data  # (time points, 1)
+        if scaler is None:
+            self.scaler = MinMaxScaler(feature_range=(0, 1)).fit(self.unscaled)
+        else:
+            self.scaler = scaler
+        if time is None:
+            self.time = np.arange(len(data))
+        else:
+            self.time = time
+        self.window_size = window_size
+        self.step_size = step_size
+        self.transform()
+        self.X = torch.tensor(np.array(
+            [torch.tensor(self.data[ind]) for ind in self.x_indices]
+        ))
+        self.Y = torch.tensor([self.data[i] for i in self.y_indices])
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
+
+    def __len__(self):
+        return len(self.X)
+
+    @property
+    def y_indices(self):
+        for j in np.arange(self.window_size, len(self.data), self.step_size):
+            yield j        
+
+    @property
+    def x_indices(self):
+        j = -self.step_size
+        for _, _ in enumerate(self.y_indices):
+            j = j + self.step_size
+            yield list(range(j, j + self.window_size))
+
+    def transform(self):
+        self.data = self.scaler.transform(self.unscaled)
+```
+
+Next, we partition the data into training and test data sets. We first
+define the size of the training set and the index at which to split
+the data.
 
 ```{python}
 train_fraction = 0.7
 split_index = int(df.shape[0] * train_fraction)
 ```
 
-The [MinMaxScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html) function rescales (normalizes) the data to values in the range (0, 1) without distorting the shape of the input distribution. Many machine learning algorithms work better when features are on similar scales.
+Finally, we create two datasets based on `split_index`. Our dataset
+class defines a function `__getitem__` that ensures we option
+input/output (X/Y) data points for training. The `window_size`
+parameter can be thought of as the size of the time slice backwards in
+time that we model the next time point on. Since the time unit is
+months and there likely is a recurrent yearly seasonality in the data
+it makes sense to use 12 time steps, but this is a parameter you could
+modify to see what effect it has on the end results. In particular, if
+you increase this number, you would look further back in the past when
+making predictions.
 
-Here, it is important to remember that scaling should be done first on the training data, and then that the same transformation is applied to the test data. In practice, we first rescale the training data independently. Then, the resulting scaler instance is used to rescale both the test data and the entire data set.
-
-```{python}
-# Reshape data for MinMaxScaler
-data = np.array(df['passengers'].values.astype('float32')).reshape(-1, 1)
-# Instantiate scaler object
-scaler = MinMaxScaler(feature_range=(0, 1))
-# Scale training data
-train = data[range(split_index)]
-train_scaled = scaler.fit_transform(train).flatten()
-# Apply *same* transformation to test data
-test = data[split_index:]
-test_scaled = scaler.transform(test).flatten()
+```{python }
+train = PassengerDataset(data[:split_index], window_size=12)
+test = PassengerDataset(
+    data[split_index:],
+    time=np.arange(split_index, len(data)),
+    window_size=12, scaler=train.scaler
+)
 ```
 
-Plot the datasets to visualize the split. Notice in particular the magnitude of the y-values for both datasets.
+Plot the datasets to visualize the split. Notice in particular the
+magnitude of the y-values for both datasets.
 
 ```{python}
-plt.plot(df.time[:split_index], train_scaled), plt.plot(df.time[split_index:], test_scaled);
+plt.plot(df.time[:split_index], train.data), plt.plot(df.time[split_index:], test.data);
 ```
 
-## Transform data to input - output pairs
+### The model
 
-Now that we have train and test data sets we need to convert the data to input - output (X/Y) pairs. The general idea is to take time slices (e.g. 12 data points) as input vectors and use the subsequent value as the known output. Since the time unit is months and there likely is a recurrent yearly seasonality in the data it makes sense to use 12 time steps, but this is a parameter you could modify to see what effect it has on the end results. In particular, if you increase this number, you would look further back in the past when making predictions.
+Complete the model below to include a
+[RNN](https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#rnn)
+layer and a
+[Linear](https://docs.pytorch.org/docs/stable/generated/torch.nn.modules.linear.Linear.html)
+output layer. If you look at the RNN documentation, you will find that
+`inputs` is a 3D tensor (`[batch, seq_len, hidden]`). Since we are
+using univariate data (i.e. one feature, namely the number of
+passengers, per time step), `hidden=1`. Consult the documentation or
+lecture notes for more information. 
 
 ```{python}
-time_steps = 12
-trainX, trainY, trainX_indices, trainY_indices = make_xy(train_scaled, window_size=time_steps)
-testX, testY, testX_indices, testY_indices = make_xy(test_scaled, window_size=time_steps) 
+class AirlineRNN(...):
+    def __init__(...):
+        # Add one RNN layer and 1-2 Linear layers
 ```
 
-## Define the model
+```{python }
+#| jupyter: {source_hidden: true}
+# Suggested solution: simple RNN model
+class AirlineRNN(nn.Module):
+    def __init__(self, hidden_size=20, output_size=8):
+        super().__init__()
+        self.rnn = nn.RNN(
+            input_size=1,
+            hidden_size=hidden_size,
+            num_layers=1,
+            batch_first=True,
+            nonlinearity="tanh"
+        )
+        self.fc1 = nn.Linear(hidden_size, output_size)
+        self.fc2 = nn.Linear(output_size, 1)
 
-Complete the model below to include a [SimpleRNN](https://keras.io/api/layers/recurrent_layers/simple_rnn/) layer and a [Dense](https://keras.io/api/layers/core_layers/dense/) output layer. If you look at the SimpleRNN documentation, you will find that `inputs` is a 3D tensor (`[batch, timesteps, feature]`). Since we are using univariate data (i.e. one feature, namely the number of passengers, per time step), `features=1`. Recall also that for the `input_shape` parameter you don't specify `batch`. Consult the documentation or lecture notes for more information. There is a worked example [airplanes-worked.ipynb](airplanes-worked.ipynb) that you can consult if you get stuck, but first try to complete the model without peeking!
-
-```{python}
-# model = Sequential()
-# Add layers here
-# model.add()
-#
-# model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
-# model.summary()
+    def forward(self, x):
+        rnn_out, hidden = self.rnn(x)
+        # rnn_out shape: (batch_size, time_steps, hidden_size)
+        # For single-layer RNN, take the last timestep output
+        rnn_out = rnn_out[:, -1, :]  # Select final timestep
+        x = self.fc1(rnn_out)
+        return self.fc2(x)
 ```
 
-Once you are happy with the configuration, fit the model and evaluate. 
+Once you are happy with the configuration, initialize the model and
+choose an appropriate loss function and optimizer.
 
 ```{python}
-#| code_folding: []
-# history = model.fit(trainX, trainY, ...)
-# Ytrainpred = model.predict(trainX)
-# Ytestpred = model.predict(testX)
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+print(f"Using {device} device")
 ```
 
-You can use the utility plotting functions to plot training history and predictions
-
-```{python}
-plot_history(history, figsize=(14, 8))
+```{python }
+model = AirlineRNN()
+model.to(device)
 ```
 
+```{python }
+#| jupyter: {source_hidden: true}
+# Solution: loss function
+loss_fn = nn.MSELoss()
+```
+
+```{python }
+#| jupyter: {source_hidden: true}
+# Solution: loss function
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+```
+
+### Training
+
+Now that we have the model components in place we define a training
+loop that will loop through our training samples. In each iteration,
+we let the model generate predictions and calculate the loss with
+respect to a loss function. The gradient of the loss with respect to
+the model parameters is then calculated with backward propagation,
+which is then passed on to and utilized by the optimizer to update
+weights that will hopefully improve network performance in the next
+epoch. To this end, we define an explicit training function:
+
+```{python }
+def train_loop(dataloader, model, loss_fn, optimizer, device, loginterval=None):
+    """Train model on data in dataloader subject to loss defined by
+    loss_fn and optimize parameters with optimizer."""
+    model.train()  # Set model to training mode
+    size = len(dataloader.dataset)
+    total_loss = 0
+
+    for batch, (X, y) in enumerate(dataloader):
+        X = X.to(device)
+        y = y.to(device)
+        output = model(X)
+        loss = loss_fn(output, y)
+
+        optimizer.zero_grad()
+        # Backpropagation
+        loss.backward()
+        # Optimization
+        optimizer.step()
+
+        total_loss += loss.item()
+
+        if loginterval is not None and batch % loginterval == 0:
+            loss, current = loss.item(), batch * batch_size + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+    avg_loss = total_loss / len(dataloader)
+    return avg_loss
+```
+
+To avoid overfitting, we also add a test function that evaluates model
+performance on the test dataset.
+
 ```{python}
-#| code_folding: []
+def test_loop(dataloader, model, loss_fn, device, loginterval=None):
+    """Evaluate model performance on dataset provided by dataloader."""
+    model.eval()  # Set model to evaluation mode
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss = 0
+
+    # Make sure no gradients are calculated during test mode
+    with torch.no_grad():
+        for X, y in dataloader:
+            X = X.to(device)
+            y = y.to(device)
+            output = model(X)
+            test_loss += loss_fn(output, y).item()  # Access directly since we don't apply loss.backward()
+
+    test_loss /= num_batches
+    return test_loss
+```
+
+Before training the model, we define dataloaders for train and test datasets.
+
+```{python }
+train_dataloader = DataLoader(train)
+test_dataloader = DataLoader(test)
+```
+
+```{python }
+epochs = 200
+epoch_loginterval = 10
+# Dictionary to store validation metrics; use same keys as Keras
+metrics = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
+for t in range(epochs):
+    if (t+1) % epoch_loginterval == 0:
+        print(f"Epoch {t+1}/{epochs}\n-------------------------------")
+    loss = train_loop(train_dataloader, model, loss_fn, optimizer, device)
+    metrics["loss"].append(loss)
+    if t % epoch_loginterval == 0:
+        print(f"  Train: Loss: {loss:.4f}")
+    val_loss = test_loop(test_dataloader, model, loss_fn, device)
+    metrics["val_loss"].append(val_loss)
+    if t % epoch_loginterval == 0:
+        print(f"  Test: Val loss: {val_loss:>8f}")
+print("Done!")
+```
+
+### Plotting
+
+We define a plotting function to visualize the training metrics.
+
+```{python}
+def plot_loss(metrics, fig_size=(12, 6)):
+    """Plot loss metrics"""
+    fig, ax = plt.subplots(figsize=fig_size)
+    ax.plot(metrics["loss"], label="train loss", color="red", alpha=0.8)
+    ax.plot(metrics["val_loss"], label="val loss", color="orange", alpha=0.8)
+    ax.set_title("model loss")
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("loss")
+    ax.legend()
+    plt.show()
+```
+
+```{python }
+plot_loss(metrics)
+```
+
+We also would like to visualize the predictions and original data.
+
+```{python }
+fig, ax = plt.subplots(figsize=(14, 8))
+markers = ["*", "x", "o"]
+legend = []
+colors = ["black", "steelblue", "darkred", "green"]
+ax.plot(train.time, train.scaler.inverse_transform(train.data))
+ax.set_title("Model prediction")
+plt.show()
+```
+
+
+```{python}
 data = {'train': (Ytrainpred, train_scaled, trainY_indices),
        'test': (Ytestpred, test_scaled, testY_indices)}
 plot_pred(data, scaler=scaler, figsize=(14, 8), plotmarkers=True)
 ```
 
+## Session 2: LSTM (and optionally GRU) 
 
-
-
-
-
-
-# Session 2: LSTM (and optionally GRU) 
-
-Building on session 1, analyse the data set using LSTM layers. Here is a tentative model setup to get you started. Here you could try using multiple layers, in which case you need to return the sequences for all but the last layer (cf [Stacked Long Short-Term Memory Networks](https://machinelearningmastery.com/stacked-long-short-term-memory-networks/)). If you have time, you can also try out the GRU layers for comparison. Do you notice any difference?
+Building on session 1, analyse the data set using LSTM layers. Here is
+a tentative model setup to get you started. Here you could try using
+multiple layers, in which case you need to return the sequences for
+all but the last layer (cf [Stacked Long Short-Term Memory
+Networks](https://machinelearningmastery.com/stacked-long-short-term-memory-networks/)).
+If you have time, you can also try out the GRU layers for comparison.
+Do you notice any difference?
 
 ```{python}
 #| scrolled: true
@@ -391,9 +455,19 @@ data = {'train': (Ytrainpred, train_scaled, trainY_indices),
 plot_pred(data, scaler=scaler, figsize=(14, 8), plotmarkers=True)
 ```
 
-Recall that the default setting for time steps is 12. If you increase this number, you would look further back in time, which in principle should play to the strength of LSTMs. Note that this need not necessarily lead to better predictions though.
+Recall that the default setting for time steps is 12. If you increase
+this number, you would look further back in time, which in principle
+should play to the strength of LSTMs. Note that this need not
+necessarily lead to better predictions though.
 
-# Resources
+## Resources
 
-The airplanes dataset is a commonly used example to introduce time series forecasting with Recurrent Neural Networks, and there are numerous blog posts on the topic. There is also a library called [Darts](https://unit8co.github.io/darts/index.html) that is dedicated to time series analyses in Python. On the Darts website you can find a [worked example](https://unit8co.github.io/darts/examples/04-RNN-examples.html) that highlights some additional aspects of time series forecasting, such as making use of the known covariates month and year.
-
+The airplanes dataset is a commonly used example to introduce time
+series forecasting with Recurrent Neural Networks, and there are
+numerous blog posts on the topic. There is also a library called
+[Darts](https://unit8co.github.io/darts/index.html) that is dedicated
+to time series analyses in Python. On the Darts website you can find a
+[worked
+example](https://unit8co.github.io/darts/examples/04-RNN-examples.html)
+that highlights some additional aspects of time series forecasting,
+such as making use of the known covariates month and year.

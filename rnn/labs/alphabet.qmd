@@ -24,6 +24,16 @@ execute:
 
 ```
 
+## Running on colab
+
+You can use this
+[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/rnn/labs/alphabet.ipynb)
+to run the notebook on Google Colab. If you do so, it's advised that
+you first make a copy to your own Google Drive before starting your
+work on the notebook. Otherwise changes you make to the notebook will
+not be saved.
+
+
 ## Preparations
 
 Execute the following code blocks to configure the session and import
