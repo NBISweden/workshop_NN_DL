@@ -102,21 +102,30 @@ def plot_pred(data, scaler=None, rmse=True, plotmarkers=False, show=True, **kw):
         plt.show()
 
 
-def plot_loss_acc(history):
-    """Plot loss and accuracy of history"""
-    try:
-        plt.plot(history.history["accuracy"])
-        plt.plot(history.history["val_accuracy"])
-    except KeyError:
-        plt.plot(history.history["acc"])
-        plt.plot(history.history["val_acc"])
+def plot_loss_acc(metrics, fig_width=12, fig_height=6):
+    """Plot loss and accuracy metrics"""
+    accuracy = "accuracy"
+    val_accuracy = "val_accuracy"
+    if accuracy not in metrics:
+        accuracy = "acc"
+        val_accuracy = "val_acc"
 
-    plt.plot(history.history["loss"])
-    plt.plot(history.history["val_loss"])
-    plt.title("model accuracy")
-    plt.ylabel("accuracy")
-    plt.xlabel("epoch")
-    plt.legend(["train acc", "val acc", "train loss", "val loss"], loc="upper left")
+    fig, ax1 = plt.subplots(figsize=(fig_width, fig_height))
+    ax2 = ax1.twinx()
+
+    ax1.plot(metrics["loss"], label="train loss", color="red", alpha=0.8)
+    ax1.plot(metrics["val_loss"], label="val loss", color="orange", alpha=0.8)
+    ax1.set_ylabel("loss")
+    ax1.set_title("model accuracy and loss")
+    ax1.set_xlabel("epoch")
+
+    ax2.plot([x*100.0 for x in metrics[accuracy]], label="train acc", color="blue", alpha=0.8)
+    ax2.plot([x*100.0 for x in metrics[val_accuracy]], label="val acc", color="green", alpha=0.8)
+    ax2.set_ylabel("accuracy (%)")
+    ax2.set_ylim(0, 100)
+
+    ax1.legend(["train loss", "val loss"], loc="upper left")
+    ax2.legend(["train acc", "val acc"], loc="upper right")
     plt.show()
 
 
