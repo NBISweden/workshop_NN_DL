@@ -35,13 +35,24 @@ format:
     ultitle: true
 
 execute:
-  echo: true
+  echo: false
   warning: false
   cache: true
   include: true
   autodep: true
   eval: true
   error: true
+
+knitr:
+  opts_chunk:
+    code-fold: false
+    tidy: true
+    comment-char: "#>"
+    fig-format: svg
+    engine.opts:
+      dvisvgm.opts: --font-format=woff
+      template: rnn/assets/tikzfig.tex
+
 
 extensions:
   - nbis-quarto

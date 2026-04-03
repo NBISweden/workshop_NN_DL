@@ -1,6 +1,81 @@
 ---
 title: "Recurrent neural networks"
+author:
+  - Per Unneberg
+format:
+  nbis-quarto-revealjs:
+    footer: "Recurrent neural networks"
 ---
 
-# Introduction
+# Setup  {visibility="hidden" .unnumbered .unlisted}
 
+```{r  knitr-setup }
+#| echo: false
+#| eval: true
+#| cache: false
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+library(reticulate)
+options(browser = "firefox")
+knitr::knit_hooks$set(inline = function(x) {
+                      prettyNum(x, big.mark =" ")
+})
+```
+
+# Recap
+
+## Perceptron (single neuron)
+
+::::::::::::::::::: { .twocolgrid style="grid-template-columns: 0.5fr 1fr;"}
+
+:::: {}
+
+```{r }
+#| label: fig-tikz-rnn-recap-perceptron-simple
+#| engine: tikz
+#| fig-width: 5
+#| fig-cap: Simple perceptron
+#| out-width: 30%
+\begin{tikzpicture}
+\pic {mackayperceptron};
+\end{tikzpicture}
+```
+
+::::
+
+:::: {}
+
+:::{}
+
+#### Architecture
+
+A single neuron has $n$ *inputs* $x_i$ and an *output* $y$. To each
+input is associated a *weight* $w_i$.
+
+:::
+
+::: {.fragment}
+
+#### Activity rule
+
+The **activity rule** is given by two steps:
+
+:::
+
+:::{.hidden}
+
+$$a = \sum_{i} w_ix_i, \quad i=0,...,n$$
+
+$$\begin{array}{ccc}
+\mathrm{activation} & & \mathrm{activity}\\
+a & \rightarrow & y(a)
+\end{array}$$
+
+[@mackay_InformationTheoryInference_2003]
+
+:::
+
+::::
+
+::::::::
