@@ -346,6 +346,7 @@ https://docs.pytorch.org/docs/stable/nn.html#loss-functions for a
 complete list of PyTorch loss functions.
 
 ```{python}
+#| eval: false
 # Modify LossFunction below to an appropriate class
 loss_fn = nn.LossFunction()
 ```
@@ -366,6 +367,7 @@ As usual, there is a [large number of
 choices](https://docs.pytorch.org/docs/stable/optim.html#algorithms). What would be the appropriate choice in this case?
 
 ```{python}
+#| eval: false
 # Modify Optimizer below to an appropriate choice
 learning_rate = 0.001
 optimizer = torch.optim.Optimizer(model.parameters(), lr=learning_rate)
@@ -378,6 +380,7 @@ optimizer = torch.optim.Optimizer(model.parameters(), lr=learning_rate)
 # Since RNNs are prone to gradient problems, the Adam optimizer is an
 # appropriate choice as it uses per-parameter learning rates based on
 # gradient history
+learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 ```
 
