@@ -16,6 +16,7 @@ format:
     date-format: "DD-MMM-YYYY"
     embed-resources: false
     code-line-numbers: false
+    center: false
     toc: true
     toc-depth: 1
     slide-level: 2
@@ -27,6 +28,7 @@ format:
     fig-height: 12
     fig-width: 10
     fig-align: center
+    text-align: left
     width: 1280
     height: 720
     margin: 0.1
@@ -42,17 +44,6 @@ execute:
   autodep: true
   eval: true
   error: true
-
-knitr:
-  opts_chunk:
-    code-fold: false
-    tidy: true
-    comment-char: "#>"
-    fig-format: svg
-    engine.opts:
-      dvisvgm.opts: --font-format=woff
-      template: rnn/assets/tikzfig.tex
-
 
 extensions:
   - nbis-quarto

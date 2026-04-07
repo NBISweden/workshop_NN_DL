@@ -107,11 +107,8 @@ We modify the data somewhat for easier processing. `df.head()` simply
 shows you the first entries of the data frame.
 
 ```{python}
-df = pd.read_csv('airline-passengers.csv')
-df = df.rename(columns={'Month': 'time','Passengers': 'passengers'})
+df = pd.read_csv('airline-passengers.csv', names=['time','passengers'], header=0)
 df['time'] = pd.to_datetime(df['time'], format='%Y-%m')
-df['year'] = pd.DatetimeIndex(df['time']).year
-df['month'] = pd.DatetimeIndex(df['time']).month
 df.head()
 ```
 
