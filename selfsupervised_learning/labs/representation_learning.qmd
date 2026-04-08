@@ -1,0 +1,50 @@
+---
+title: "Lab session: Representation learning"
+jupyter: python3
+format:
+  html:
+    code-fold: true
+description: Representation learning lab.
+execute:
+  eval: true
+---
+
+## Running on colab
+
+You can use this
+[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/rnn/labs/airplanes.ipynb)
+to run the notebook on Google Colab. If you do so, it's advised that
+you first make a copy to your own Google Drive before starting your
+work on the notebook. Otherwise changes you make to the notebook will
+not be saved.
+
+
+## Preparation
+
+### Configuration
+
+Execute the following code blocks to configure the session and import
+relevant modules.
+
+```{python}
+%config InlineBackend.figure_format ='retina'
+%load_ext autoreload
+%autoreload 2
+%matplotlib inline
+```
+
+```{python}
+import os
+import sys
+import math 
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader, Subset
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+```
+
+## Lab session: predicting airline passengers
