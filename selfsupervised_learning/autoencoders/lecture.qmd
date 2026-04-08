@@ -1,6 +1,6 @@
 ---
 title: "Self-Supervised Learning"
-subtitle: "Autoencoders and beyond"
+subtitle: "No labels - no worries!"
 author: "Erik Ylipää"
 date: today
 format:
@@ -46,9 +46,20 @@ from viz.supervised_vs_unsupervised import supervised_vs_unsupervised
 supervised_vs_unsupervised()
 ```
 
-## The power of supervised learning
+## The power of supervised learning {.smaller}
 
-Most problems we want to solve are supervised: we often want to predict something based on known data.
+:::: {.columns}
+
+::: {.column width="50%"}
+Most problems we want to solve are supervised. We often want to predict things based on an input. For example:
+
+ - Given an image, predict what it contains (classification)
+ - Given a sentence in English, translate it to French (translation)
+ - Given an email, predict whether it's spam (classification)
+
+:::
+
+::: {.column width="50%"}
 
 ```{python}
 #| echo: false
@@ -57,14 +68,23 @@ from viz.supervised_vs_unsupervised import supervised
 supervised()
 ```
 
+:::
+
+::::
+
 ::: {.notes}
 Most problems we want to solve are supervised, we want to learn a mapping from inputs to outputs. However, supervised learning relies on labeled data, which can be expensive and time-consuming to obtain. In contrast, unsupervised learning can discover structure in data without labels, but is often more useful for exploratory analysis than for solving specific tasks.
 :::
 
-## The challenge of supervised learning
+## The challenge of supervised learning: labeling
 
-Supervised learning requires data with labels.
 
+```{python}
+#| echo: false
+#| eval: true
+from viz.supervised_learning_labeling import supervised_learning_labeling
+supervised_learning_labeling(width=500)
+```
 
 ::: {.notes}
 The main challenge in supervised learning is obtaining labeled data, which can be expensive and time-consuming to collect and annotate. For certain problems, such as rare disease, we are fundamentally limited in how much labeled data we can get. This motivates the need for methods that can learn from unlabeled data.
@@ -127,7 +147,14 @@ cartesian_vs_polar()
 The way we represent data has a huge impact on how easy a problem is to solve. This toy example illustrates that in a cartesian representation, the classes are hard to easily separate, while in a polar representation they become linearly separable.
 :::
 
-## Deep learning learns representations from data
+## Principal Component Analysis (PCA)
+
+PCA is a method of learning linear representations that capture the most variance in data.
+
+## Visualizing representations with UMAP
+
+
+## Neural Networks learn representations from data
 
 ```{python}
 #| echo: false
