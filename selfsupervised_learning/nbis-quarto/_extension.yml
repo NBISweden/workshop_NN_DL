@@ -1,0 +1,36 @@
+title: Nbis-quarto revealjs extension
+author: Per Unneberg
+version: 1.0.0
+quarto-required: ">=1.6.0"
+contributes:
+  formats:
+    common:
+      html-math-method: katex
+      toc-depth: 2
+      toc-title: Outline
+      slide-number: true
+      slide-level: 2
+      show-slide-number: all
+      width: 1280
+      height: 720
+      margin: 0.08
+      theme: [nbis.scss]
+      title-logo-nbis: assets/logo/nbislogo-green-teal-txt.svg
+      title-logo-scilifelab: assets/logo/SciLifeLab_Logotype_Green_POS.png
+      title-logo-padding: 100px
+      title-logo-show: true
+      header-logo-left: assets/logo/nbislogo-green-teal.svg
+      header-logo-left-height: 50px
+      header-logo-right: assets/logo/SciLifeLab_symbol_green.png
+      header-logo-right-height: 50px
+      filters:
+        - reveal-logo.lua
+        - ultitle.lua
+    revealjs:
+      ultitle: true
+    revealjs+splittitle:
+      title-slide-bg:
+        left: transparent
+        right: "#c0d6d8"
+      template-partials:
+        - splittitle/title-slide.html

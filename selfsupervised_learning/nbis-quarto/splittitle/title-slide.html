@@ -1,0 +1,40 @@
+<section id="$idprefix$title-slide"$for(title-slide-attributes/pairs)$ $it.key$="$it.value$"$endfor$ data-background-gradient="linear-gradient(to right, $title-slide-bg.left$ 0%, $title-slide-bg.left$ 40%, $title-slide-bg.right$ 40%, $title-slide-bg.right$ 100%)">
+  <div class="columns">
+    <div class="column" style="width:37%;">
+      <h1 class="title">$title$</h1>
+      $if(subtitle)$
+      <h3 class="subtitle">$subtitle$</h3>
+      $endif$
+      $for(author)$
+      <h4 class="author">$author$</h4>
+      $endfor$
+      $if(date)$
+      <h4 class="date">$date$</h4>
+      $endif$
+      $if(title-logo-show)$
+      <div style="width: 100%; padding-top: $title-logo-padding$;">
+	<div class="quarto-figure quarto-figure-center" style="width: 100%">
+	  <figure>
+	    <p><img data-src="$title-logo-nbis$" style="width:40.0%"></p>
+	  </figure>
+	</div>
+	<div class="quarto-figure quarto-figure-center" style="width: 100%;">
+	  <figure>
+	    <p><img data-src="$title-logo-scilifelab$" style="width:50.0%"></p>
+	  </figure>
+	</div>
+      </div>
+      $endif$
+    </div>
+    <div class="column" style="width:63%">
+      $if(title-slide-img)$
+      <div class="quarto-figure quarto-figure-center" style="align-content: center;">
+	<figure>
+	  <p><img data-src="$title-slide-img$"
+	    class="quarto-figure quarto-figure-center" style="width:$title-slide-img-width$"></p>
+	</figure>
+      </div>
+      $endif$
+    </div>
+  </div>
+</section>
