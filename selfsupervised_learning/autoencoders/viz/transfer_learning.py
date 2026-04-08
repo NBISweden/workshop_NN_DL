@@ -9,8 +9,9 @@ from manim import (
     smooth,
 )
 
+ratio = 1280/780
 PIXEL_WIDTH  = 1280
-PIXEL_HEIGHT = 780
+PIXEL_HEIGHT = int(PIXEL_WIDTH // ratio)
 FRAME_WIDTH  = 15
 
 manim.config.frame_width  = FRAME_WIDTH
