@@ -28,14 +28,20 @@ extra-index-urls = ["https://download.pytorch.org/whl/rocm6.2"]
 torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm6.2" }
 torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm6.2" }
 
-[feature.rise-jupyter.pypi-dependencies]
-jupyterlab_rise = "*"
-
 [feature.quarto.dependencies]
 quarto = "*"
 
+[feature.manim.dependencies]
+ffmpeg = ">=7,<8"
+manim = ">=0.18"
+#pangocairo = ">=1.30.0"
+
+#[feature.manim.dependencies]
+#manim = ">=0.18,<1"
+
+
 [environments]
 teachers = ["torch"]
-basics = ["torch", "rise-jupyter"]
-local-amd = ["rocm", "rise-jupyter"]
+basics = ["torch", "quarto", "manim"]
+local-amd = ["rocm", "quarto", "manim"]
 
