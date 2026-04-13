@@ -1,7 +1,6 @@
 ---
 title: "Lab session: Representation learning"
 jupyter: 
-  
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -17,7 +16,7 @@ execute:
 ## Running on colab
 
 You can use this
-[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/rnn/labs/airplanes.ipynb)
+[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/selfsupervised/labs/representation_learning.ipynb)
 to run the notebook on Google Colab. If you do so, it's advised that
 you first make a copy to your own Google Drive before starting your
 work on the notebook. Otherwise changes you make to the notebook will
@@ -40,67 +39,809 @@ relevant modules.
 
 ```{python}
 import os
+os.environ["HSA_ENABLE_DXG_DETECTION"]="1"
+```
+
+```{python}
+import os
 import sys
 import math 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, Subset
+from torchvision.datasets import ImageFolder
+import torchvision.transforms.v2 as transforms
+
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-
-from sklearn.datasets import fetch_lfw_people
 from sklearn.decomposition import PCA
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+
+import medmnist
+
+import matplotlib.pyplot as plt
+import manim as mn
+mn.config.media_width = "100%"
+mn.config.verbose = "WARNING"
+
+import plotly.graph_objects as go
+
 ```
 
+```{python}
+torch.cuda.is_available()
+```
 ## Lab session: shallow representations
 
 We'll start with one of the fundamental methods for learning representations: Principal Component Analysis (PCA). PCA is a linear method that finds the directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
 
 ### Loading the data
 
-We will use the Labeled Faces in the Wild (LFW) dataset, which contains images of faces collected from the web. The task is to classify the images based on the identity of the person in the image.
-```{python}
-lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
+Here we will use images of parasites from a [parasites dataset](https://universe.roboflow.com/graduao/sistema-para-analise-de-ovos-de-parasitas-em-amostra-de-agua-e-sangue). The dataset contain images of 8 different kinds of parasites extracted from microscopic images.
 
-# introspect the images arrays to find the shapes (for plotting)
-n_samples, h, w = lfw_people.images.shape
-print("Total dataset size:", n_samples, "images of size", h, "x", w)
+```{python}
+
+# The dataset stores the images with the channel first, in this lab we flatten the images before sending them to the neural network, but the matplotlib visualization functions want's the channel axis first, so we add this transform so the visualization functions don't have to deal with it
+class Transpose(nn.Module):
+    def __init__(self, order):
+        super(Transpose, self).__init__()
+        self.order = order
+
+    def forward(self, img):
+        return img.permute(self.order)
+
+# We separate the transforms in the case that we want to add augmentations to the training data later on. For now, we just resize the images to 64x64 pixels, convert them to grayscale and then to tensors.
+train_transforms = transforms.Compose([
+    #transforms.Resize((32, 32)),
+    transforms.Grayscale(num_output_channels=1),
+    transforms.ToTensor(),
+    Transpose((1,2,0))
+])
+
+eval_transforms = transforms.Compose([
+    #transforms.Resize((32, 32)),
+    transforms.Grayscale(num_output_channels=1),
+    transforms.ToTensor(),
+    Transpose((1,2,0))
+])
+
+# train_data = ImageFolder(
+#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/train", 
+#     transform=train_transforms
+# )
+# dev_data = ImageFolder(
+#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/valid", 
+#     transform=eval_transforms
+# )
+# test_data = ImageFolder(
+#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/test", 
+#     transform=eval_transforms
+# )
+ 
+from medmnist import BloodMNIST
+
+train_data = BloodMNIST(split="train", download=True, transform=train_transforms)
+dev_data = BloodMNIST(split="val", download=True, transform=train_transforms)
+test_data = BloodMNIST(split="test", download=True, transform=train_transforms)
+
+img, _ = train_data[0]
+
+IMG_SHAPE = img.shape
+
+print("Train dataset size:", len(train_data))
+print("Development dataset size:", len(dev_data))
+print("Test dataset size:", len(test_data))
+print("Image shape:", img.shape)
 ```
+
+We've loaded the images as an ImageFolder dataset, which is a convenient way to load images organized in folders. Each folder corresponds to a class, and the images inside are the samples of that class. The `transform` argument allows us to specify how we want to preprocess the images. Here we resize them to grayscale 64x64 pixels and convert them to tensors.
 
 Let's have a look at the images and the targets in the dataset:
 
-```{python}
-X = lfw_people.data
-y = lfw_people.target
-target_names = lfw_people.target_names
-n_classes = target_names.shape[0]
-print("Number of classes:", n_classes)
-print("Target names:", set(target_names))
-```
-
 And a few example images:
 ```{python}
-fig, axes = plt.subplots(2, 5, figsize=(15, 6))
+rng = np.random.default_rng(seed=1729)
+n_rows, n_cols = 2, 5
+image_indices = rng.choice(len(train_data), size=n_rows*n_cols, replace=False)
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 6))
 for i, ax in enumerate(axes.flatten()):
-    ax.imshow(lfw_people.images[i], cmap='gray')
-    ax.set_title(target_names[y[i]])
+    train_img, y = train_data[image_indices[i]]
+    ax.imshow(train_img, cmap='gray')
+    ax.set_title(train_data.labels[y])
     ax.axis('off')
 plt.tight_layout()
 plt.show()
 ```
 
-We will treat each of these images as a vector, by just flattening the 2D image into a 1D vector. This is a common preprocessing step for many machine learning algorithms. <video src="RepresentationLearningScene.mp4" width="500" controls>
+
+
+We will treat each of these images as a vector, by just flattening the 2D image into a 1D vector. This is a common preprocessing step for many machine learning algorithms.
 
 
 ```{python}
-from pathlib import Path
-p = Path(" RepresentationLearningScene.mp4")
-print(p.exists())
+#| echo: false
+#| eval: false
+%%manim -qm -v warning FlattenFace
+
+
+from manim import (
+    Scene, FadeIn, Write, Create,
+    VGroup, Square, Rectangle, Text, Arrow, Brace,
+    ORIGIN, DOWN, RIGHT, LEFT, UP, WHITE, YELLOW,
+    FadeOut, Transform, rgb_to_color,
+)
+
+class FlattenFace(Scene):
+    def construct(self):
+        img = train_data[0][0].squeeze().numpy()
+        H, W = img.shape
+        cell_size = 0.1
+        gap = 0.01
+
+        # Build the pixel grid
+        pixels = VGroup()
+        grid = []
+        for r in range(H):
+            row = VGroup()
+            for c in range(W):
+                color = rgb_to_color([int(img[r, c] * 255)] * 3)
+                sq = Square(side_length=cell_size - gap)
+                sq.set_fill(color, opacity=1)
+                sq.set_stroke(WHITE, width=0.5, opacity=0.3)
+                sq.move_to(RIGHT * c * cell_size + DOWN * r * cell_size)
+                row.add(sq)
+            pixels.add(row)
+
+        # Start centered, then shift left to make room for the vector
+        pixels.move_to(ORIGIN).shift(UP * 0.5)
+        self.play(FadeIn(pixels), run_time=1.5)
+
+        grid_label = Text(f"{H} × {W} image", font_size=28).next_to(pixels, DOWN, buff=0.25)
+        self.play(Write(grid_label))
+        self.wait(0.8)
+
+        self.play(pixels.animate.shift(UP * 2.8), FadeOut(grid_label), run_time=1.5)
+
+        # ── Vector target: one horizontal strip per row ───────────────────────
+        # Each row of W pixels collapses to a single thin strip of the same height.
+        strip_w    = 0.5
+        strip_h    = cell_size            # same height per row as the grid
+        vector_x   = 4.2
+        top_y      = pixels.get_top()[1]  # align vector top with grid top
+
+        vector_group = VGroup()
+        for r in range(H):
+            row_avg = img[r, :].mean()
+            color = rgb_to_color([int(row_avg * 255)] * 3)
+            strip = Rectangle(
+                width=strip_w, height=strip_h - 0.005,
+                fill_color=color, fill_opacity=1,
+                stroke_color=WHITE, stroke_width=0.5, stroke_opacity=0.3,
+            )
+            strip.move_to(RIGHT * vector_x + UP * (top_y - (r + 0.5) * strip_h))
+            vector_group.add(strip)
+
+        # Arrow and label between grid and vector
+        arrow = Arrow(pixels.get_right(), vector_group.get_left(), color=YELLOW, buff=0.2)
+        arrow_label = Text("flatten", font_size=24, color=YELLOW).next_to(arrow, UP, buff=0.1)
+        self.play(Create(arrow), Write(arrow_label))
+
+        # ── Animate: rows fly into the vector, 4 rows per step ────────────────
+        rows_per_batch = 4
+        for batch_start in range(0, H, rows_per_batch):
+            anims = [
+                Transform(VGroup(*grid[r]), vector_group[r])
+                for r in range(batch_start, min(batch_start + rows_per_batch, H))
+            ]
+            self.play(*anims, run_time=0.35)
+
+        # Label the resulting vector
+        vec_label = Text(f"{H * W}-dim vector", font_size=28).next_to(vector_group, DOWN, buff=0.25)
+        brace = Brace(vector_group, RIGHT, buff=0.1, color=YELLOW)
+        brace_label = Text(f"{H * W}", font_size=24, color=YELLOW).next_to(brace, RIGHT, buff=0.1)
+        self.play(Write(vec_label), Create(brace), Write(brace_label))
+
+        self.wait(3)
 ```
+
+
+# Principal Component Analysis (PCA)
+
+A classical form of representation learning is Principal Component Analysis (PCA). PCA finds the orthogonal directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
+
+Below we illustrate how PCA works on a simple 2D dataset. The first principal component (PC1) is the direction of maximum variance, and the second principal component (PC2) is orthogonal to PC1 and captures the remaining variance. After projecting the data onto these components, we can see that the data is now represented in a new coordinate system defined by PC1 and PC2. In this new space, the axes are uncorrelated and the variance along each axis is maximized.
+
+```{python}
+#| echo: true
+#| eval: true
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.decomposition import PCA
+
+n_samples = 200
+cov = np.array([[1, 2], [1, 1]])  # covariance matrix with some correlation
+X = np.random.multivariate_normal(mean=[0, 0], cov=cov, size=n_samples)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+projection = PCA(n_components=2, whiten=False).fit(X)
+component_1 = projection.components_[0]
+component_2 = projection.components_[1]
+std1, std2 = np.sqrt(projection.explained_variance_)
+
+axes[0].scatter(X[:, 0], X[:, 1], alpha=0.5, edgecolor='k')
+axes[0].set_title("Random 2D data with random covariance")
+axes[0].set_xlabel("x1")
+axes[0].set_ylabel("x2")
+axes[0].axis("equal")
+axes[0].arrow(0, 0, std1*component_1[0], std1*component_1[1], color='red', width=0.05, label='PC1')
+axes[0].arrow(0, 0, std2*component_2[0], std2*component_2[1], color='blue', width=0.05, label='PC2')
+axes[0].legend()
+x_pca_projected = projection.transform(X)
+
+axes[1].scatter(x_pca_projected[:, 0], x_pca_projected[:, 1], alpha=0.5, edgecolor='k')
+axes[1].set_title("PCA projected data")
+axes[1].set_xlabel("PC1")
+axes[1].set_ylabel("PC2")
+axes[1].axis("equal")
+axes[1].arrow(0, 0, std1, 0, color='red', width=0.05, label='PC1')
+axes[1].arrow(0, 0, 0, std2, color='blue', width=0.05, label='PC2')
+axes[1].legend()
+plt.tight_layout()
+plt.show()
+# plt.arrow(0, 0, component_1[0], component_1[1], color='red', width=0.02, label='PC1')
+# plt.arrow(0, 0, component_2[0], component_2[1], color='blue', width=0.02, label='PC2')
+# plt.title("Random 2D data with random covariance")
+# plt.xlabel("x1")
+# plt.ylabel("x2")
+# plt.axis("equal")
+# plt.show()
+```
+
+We can use this to try to _represent_ the data in a reduced space, but only using the projection onto some reduced number of principal components. Below, you can see examples of projecting the data to either of the principal components.
+
+```{python}
+fig, axes = plt.subplots(2, 1, figsize=(12, 5), sharey='all', sharex='all')
+#sns.rugplot(x_pca_projected[:, 0], color='red', label='x1', ax=axes[0])
+axes[0].scatter(x_pca_projected[:, 0], np.zeros_like(x_pca_projected[:, 0]), color='red', label='x1', alpha=0.5, edgecolor='k')
+axes[0].set_yticks([])
+#sns.rugplot(x_pca_projected[:, 1], color='blue', label='x2', ax=axes[1])
+axes[1].scatter(x_pca_projected[:, 1], np.zeros_like(x_pca_projected[:, 1]),  color='blue', label='x2', alpha=0.5, edgecolor='k')
+axes[1].set_yticks([])
+plt.tight_layout()
+plt.subplots_adjust(hspace=0.5)
+plt.show()
+```
+
+In this sense, projecting the data onto a set of principal components changes how it's represented, and in a sense is an optimal choice if the goal is to preserve as much variance as possible with a linear projection. However, it's important to note that PCA is a linear method, and may not capture complex nonlinear relationships in the data. For more complex data, nonlinear dimensionality reduction techniques or deep learning-based representation learning methods may be more effective.
+
+## PCA on our parasite dataset
+
+We'll now see how we can apply PCA to our parasite dataset. We will first flatten the images into vectors, and then apply PCA to find the principal components of the data. We can then visualize the data in the space of the first two principal components to see if there are any interesting patterns or clusters.
+
+```{python}
+X_train, y_train = np.array([img.numpy().flatten() for img, _ in train_data]), [y for _, y in train_data]
+X_dev, y_dev = np.array([img.numpy().flatten() for img, _ in dev_data]), [y for _, y in dev_data]
+X_test, y_test = np.array([img.numpy().flatten() for img, _ in test_data]), [y for _, y in test_data]
+pca = PCA(n_components=49).fit(X_train)  # n_components here was chosen to be square, so they all fit in the grid below
+```
+
+As these components are linear combinations of the original pixel values, we can visualize them as images to see what kind of features they capture. Below we visualize the first 25 principal components as images.
+
+```{python}
+n_components, d = pca.components_.shape
+n_rows = int(np.ceil(np.sqrt(n_components)))
+n_cols = int(np.ceil(n_components / n_rows))
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 12))
+for i, ax in zip(range(n_components), axes.flatten()):
+    component_img = pca.components_[i].reshape(*IMG_SHAPE)
+    ax.imshow(component_img, cmap='gray')
+    ax.set_title(f"PC {i+1}")
+    ax.axis('off')
+```
+
+We can then project the data onto these components, to get a new lower-dimensional representation of it. In a sense we can think of this as a simple lossy compression of the data, using the linear basis which captures the most variance in the full training dataset. Let's have a look of how the data looks if we "decompress" it back to the original space, but only using a reduced number of principal components.
+
+```{python}
+#import ipywidgets as widgets
+#k = widgets.IntSlider(min=1, max=1024, step=1, value=128, description='PCs used:')
+k = 64
+pca = PCA(n_components=k).fit(X_train)
+x_projected = pca.transform(X_train)
+x_approx = pca.inverse_transform(x_projected)  # only use
+n_rows, n_cols = 2, 5
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 6))
+# The top row shows the approximated images using the PCA components, and the bottom row shows the original images for comparison.
+for col_i in range(n_cols):
+  ax_a = axes[0, col_i]
+  ax_o = axes[1, col_i]
+  img_a = x_approx[col_i].reshape(*IMG_SHAPE)
+  img_o = X_train[col_i].reshape(*IMG_SHAPE)
+  
+  ax_a.imshow(img_a, cmap='gray')
+  ax_a.set_title(f"PCs used: {pca.n_components_}")
+  ax_a.axis('off')
+  ax_o.imshow(img_o, cmap='gray')
+  ax_o.set_title("Original")
+  ax_o.axis('off')
+
+
+plt.tight_layout()
+plt.show()
+```
+
+## Exercise:
+Experiment with  different values of `k`, the number of principal components used for the projection, and see how it affects the quality of the reconstruction. You can also try applying the fitted PCA (e.g.
+ `pca.transform(X_dev)`) to the development or test set, to see how well the components learned from the training set generalize to new data. At what value do you no longer see a difference between the original and the approximated images? 
+What happens when you set `k=1`?
+
+### Tangent: variance explained
+The variance explained by the first `k` principal components is given by the sum of the first `k` eigenvalues divided by the sum of all eigenvalues. This can be used to determine how many principal components to keep in order to retain a certain percentage of the variance in the data. You can compute this using the `explained_variance_ratio_` attribute of the PCA object, which gives the percentage of variance explained by each component.
+
+```{python}
+#| echo: true
+#| eval: false
+x = np.arange(1, len(pca.explained_variance_ratio_) + 1)
+y = np.cumsum(pca.explained_variance_ratio_)
+plt.figure(figsize=(8, 5))
+plt.plot(x, y)
+plt.xlabel('Number of principal components')
+plt.ylabel('Cumulative explained variance')
+plt.title('Variance explained by principal components')
+```
+
+
+## Visualzing the latent space
+
+We can think of the reduced represntation of the data in the PCA space as a "latent space", each element (direction) in this space correponds to how much a given image is represented by the corresponding principal component. 
+
+A common tool in representation learning is to inspect the representation using nonlinear dimensionality reduction techniques such as t-SNE or UMAP, which try to preserve local structure in the data when projecting it to a 2D space for visualization. Below we visualize the data in the space of the first two principal components, which is a simple linear projection of the data.
+
+```{python}
+import umap
+
+# This general visualization function will be used throughout the lab. It assumes a pytorch model with an `encode` method that takes in a batch of data and returns the corresponding latent representations. It then applies UMAP to the latent representations to project them to 2D, and visualizes the result using a scatter plot colored by the class labels.
+
+def visualize_latent_space(X_train, y_train, model, device=None):
+    if device is None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    x_projected = model.encode(torch.tensor(X_train, dtype=torch.float32, device=device)).detach().cpu().numpy()
+
+    reducer = umap.UMAP(n_components=2, random_state=1729)
+    embedding = reducer.fit_transform(x_projected)
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=y_train, cmap="tab10", s=20)
+    plt.colorbar(scatter)
+    plt.title(f"UMAP projection of {type(model).__name__} representations data with k={x_projected.shape[1]}")
+    plt.tight_layout()
+    plt.show()
+```
+
+
+```{python}
+
+class PCAWrapper(nn.Module):
+    '''Dummy wrapper around PCA to make it compatible with the visualization function above, which expects a PyTorch model with an `encode` method.'''
+    def __init__(self, pca):
+        super(PCAWrapper, self).__init__()
+        self.pca = pca
+        self.latent_dim = pca.n_components_
+    
+    def encode(self, x):
+        return torch.tensor(self.pca.transform(x), dtype=torch.float32)
+
+pca_model = PCAWrapper(pca)
+visualize_latent_space(X_train, y_train, pca_model)
+```
+
+Experiment with different numbers of principal components (`k`), and see how it affects the visualization of the latent space. You can also try applying UMAP directly to the original data without PCA, or to the data projected onto a different number of principal components, to see how it affects the structure of the latent space.
+
+## PCA as a linear neural network
+
+In the example above, we learned a projection matrix $W$ that maps the original data to a lower dimensional space. So the latent representation was $z_i = W x_i$, where $W$ is a matrix of size $k \times d$, where $k$ is the number of principal components we want to keep, and $d$ is the dimensionality of the original data. The principal components are derived from the eigenvalues of the covariance matrix of the data, for which there are highly optimized algorithms. However, we can also learn the projection matrix $W$ using gradient descent, by treating it as a linear neural network with no activation function. The loss function we would use is the mean squared error between the original data and the reconstructed data from the latent representation, which is given by:
+
+$$L = \frac{1}{n} \sum_{i=1}^n ||x_i - W^T W x_i||^2$$
+
+Let's implement this in PyTorch and see if we can learn similar projection matrices as PCA.
+
+```{python}
+from tqdm import tqdm
+
+class LinearAutoencoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super(LinearAutoencoder, self).__init__()
+        self.latent_dim = latent_dim
+        # This encoder is a linear layer that maps the input to the latent space. We set bias=False because PCA does not include a bias term, and we want to learn a linear transformation that is centered around the origin.
+
+        self.encoder = nn.Linear(input_dim, latent_dim, bias=False)
+        # We could use different matrices for the "compression" and "decompression" steps, but for PCA they are the same, so we will just use the transpose of the encoder weights for the decoder.
+        # self.decoder = nn.Linear(latent_dim, input_dim, bias=False)
+    
+    def forward(self, x):
+        z = self.encode(x)
+        x_recon = self.decode(z)
+        return x_recon
+
+    def encode(self, x):
+        return self.encoder(x)
+    
+    def decode(self, z):
+        x_hat = self.encoder.weight.t() @ z.t()
+        return x_hat.t()
+```
+
+```{python}
+def train(model, train_loader, dev_loader, device=None, max_epochs=50, batch_size=64, learning_rate=1e-3, plotlosses=None):
+  if device is None:
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+  model.to(device)
+  optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+  criterion = nn.MSELoss()
+  
+  with tqdm(total=max_epochs, desc="epoch") as epoch_bar:
+      for epoch in range(max_epochs):
+          training_loss_acc = 0
+          training_examples = 0
+          model.train()
+          
+          for i, batch in enumerate(train_loader):
+              x_batch, _ = batch
+              x_batch = x_batch.view(x_batch.size(0), -1)# flatten the images
+              x_batch = x_batch.to(device)  
+              x_recon = model(x_batch)
+              loss = criterion(x_recon, x_batch)
+              optimizer.zero_grad()
+              loss.backward()
+              optimizer.step()
+              training_loss_acc += loss.item()
+              training_examples += x_batch.size(0)
+              
+          model.eval()
+          with torch.no_grad():
+              dev_loss_acc = 0
+              dev_examples = 0
+              for batch in dev_loader:
+                  x_batch, _ = batch
+                  x_batch = x_batch.view(x_batch.size(0), -1)  # flatten the images
+                  x_batch = x_batch.to(device)
+                  x_recon = model(x_batch)
+                  dev_loss_acc += criterion(x_recon, x_batch).item()
+                  dev_examples += x_batch.size(0)
+          #epoch_bar.set_postfix({"train_loss": training_loss_acc / training_examples, "dev_loss": dev_loss_acc / dev_examples})
+          if plotlosses is not None:
+              plotlosses.update({
+                  "loss": training_loss_acc / training_examples,
+                  "val_loss": dev_loss_acc / dev_examples
+              })
+              plotlosses.send()
+          #epoch_bar.update(1)
+```
+
+```{python}
+batch_size = 256
+
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
+dev_loader = DataLoader(dev_data, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=8)
+input_dim = X_train.shape[1]
+latent_dim = 64
+
+linear_model = LinearAutoencoder(input_dim=input_dim, latent_dim=latent_dim)
+from livelossplot import PlotLosses
+plotlosses = PlotLosses()
+```
+```{python}
+# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
+train(linear_model, train_loader, dev_loader, max_epochs=10, plotlosses=plotlosses)
+```
+
+
+We've now "trained" a "linear neural network" to learn a projection matrix that maps the original data to a lower-dimensional latent space, and then reconstructs the original data from that latent representation. The loss function we used is the mean squared error between the original data and the reconstructed data, which is the same as the loss function for PCA. After training, we can inspect the learned "principal components" and compare it to the principal components learned by PCA to see if they are similar.
+
+```{python}
+# Get the learned projection matrix from the encoder weights
+W_learned = linear_model.encoder.weight.detach().cpu().numpy()
+
+n_components, d = W_learned.shape
+n_rows = int(np.ceil(np.sqrt(n_components)))
+n_cols = int(np.ceil(n_components / n_rows))
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 12))
+for ax in axes.flatten():
+    ax.axis('off')
+for i, ax in zip(range(n_components), axes.flatten()):
+    component_img = W_learned[i].reshape(*IMG_SHAPE)
+    ax.imshow(component_img, cmap='gray')
+    ax.set_title(f"PC {i+1}")
+    ax.axis('off')
+```
+
+```{python}
+def visualized_reconstruction(X_train, model, n_examples=5, device=None):
+    if device is None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    X_train_tensor = torch.tensor(X_train[:n_examples], dtype=torch.float32, device=device)
+    with torch.no_grad():
+        x_reconstructed = model(X_train_tensor).detach().cpu().numpy()
+    n_rows, n_cols = 2, 5
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 6))
+    # The top row shows the approximated images using the PCA components, and the bottom row shows the original images for comparison.
+    for col_i in range(n_cols):
+        ax_a = axes[0, col_i]
+        ax_o = axes[1, col_i]
+        img_a = x_reconstructed[col_i].reshape(*IMG_SHAPE)
+        img_o = X_train[col_i].reshape(*IMG_SHAPE)
+        
+        ax_a.imshow(img_a, cmap='gray')
+        ax_a.axis('off')
+        ax_o.imshow(img_o, cmap='gray')
+        ax_o.set_title("Original")
+        ax_o.axis('off')
+
+    plt.suptitle(f"Reconstruction of original images using {type(model).__name__} with latent dim {model.latent_dim}")
+
+    plt.tight_layout()
+    plt.show()
+```
+
+```{python}
+visualized_reconstruction(X_train, linear_model, n_examples=5)
+```
+
+### Questions
+Are the learned components similar to the ones learned by PCA? If there is a difference, why do you think that is? Try experimenting with different learning rates, batch sizes, and numbers of epochs to see how it affects the learned components and the reconstruction loss. You can also try using a different optimization algorithm, such as SGD or RMSprop, to see if it converges to a different solution.
+
+### Visualizing the latent space
+
+Just as with regular PCA, we can also visualize the latent space of the linear autoencoder by projecting the data onto the learned components and applying UMAP. Try this out and see how the structure of the latent space compares to the one obtained from PCA. You can also experiment with different numbers of components in the linear autoencoder, and see how it affects the structure of the latent space.
+
+
+```{python}
+visualize_latent_space(X_train, y_train, linear_model)
+```
+
+## Autoencoders
+
+In the example above, we saw how we could approximate what PCA does using a linear neural network. However, PCA can only learn linear ways of representing the data (as a sum of basis vectors). Let's see if we can learn a more complex, nonlinear representation of the data using a nonlinear autoencoder. An autoencoder is a neural network that consists of an encoder and a decoder. The encoder maps the input data to a latent representation, and the decoder maps the latent representation back to the original data. The autoencoder is trained to minimize the reconstruction loss between the original data and the reconstructed data from the latent representation.
+
+```{python}
+
+class AEBlock(nn.Module):
+    def __init__(self, input_dim, output_dim, activation_function = 'leaky_relu'):
+        super(AEBlock, self).__init__()
+        self.dense = nn.Linear(input_dim, output_dim, bias=True)
+        self.normalization = nn.LayerNorm(output_dim)
+        self.dropout = nn.Dropout(0.1)
+        self.activation_function = activation_function
+    
+    def forward(self, x):
+        pre_activation = self.dense(x)
+        pre_activation = self.normalization(pre_activation)
+        if self.activation_function == 'leaky_relu':
+            activation = nn.functional.leaky_relu(pre_activation)
+        elif self.activation_function == 'relu':
+            activation = nn.functional.relu(pre_activation)
+        else:
+            activation = pre_activation
+        activation = self.dropout(activation)
+        return activation
+
+
+class Autoencoder(nn.Module):
+    def __init__(self, input_dim, latent_dim=16, encoder_dims=[256, 256, 256, 256], decoder_dims=[256, 256, 256, 256]):
+        super(Autoencoder, self).__init__()
+        # We create an explicit list of layers so that we can easily inspecit them and compose them how we'd like in the forward method. We could also have used `nn.Sequential` for the encoder and decoder, but this way we have more flexibility in how we compose the layers in the forward method, and we can also easily add skip connections or other architectural features if we want to experiment with that later on.
+        self.latent_dim = latent_dim
+        self.encoder_layers = nn.ModuleList()
+        dim_from_below = input_dim
+        for encoder_dim in encoder_dims:        
+            dense_layer = AEBlock(dim_from_below, encoder_dim, activation_function='leaky_relu')
+            self.encoder_layers.append(dense_layer)
+            dim_from_below = encoder_dim
+        self.inner_layer = nn.Linear(dim_from_below, latent_dim, bias=True)
+
+        self.decoder_layers = nn.ModuleList()
+        dim_from_above = latent_dim
+        for decoder_dim in decoder_dims:
+            dense_layer = AEBlock(dim_from_above, decoder_dim, activation_function='leaky_relu')
+            self.decoder_layers.append(dense_layer)
+            dim_from_above = decoder_dim
+        self.final_layer = nn.Linear(dim_from_above, input_dim, bias=True)
+
+    def forward(self, x):
+        z = self.encode(x)
+        x_hat = self.decode(z)
+        return x_hat
+    
+    def encode(self, x):
+        z = x
+        for layer in self.encoder_layers:
+            z = layer(z)
+        z = self.inner_layer(z)
+        z = nn.functional.normalize(z, dim=-1)
+        return z
+    
+    def decode(self, z):
+        # We apply a nonlinearity after each layer except the last one, which is the output layer that reconstructs the original data. We skip using a non-linearity because we don't want to squash the range of the output values, as we want to be able to reconstruct the original data as accurately as possible.
+        for layer in self.decoder_layers:
+            z = layer(z)
+        z = self.final_layer(z)
+        return z
+```
+
+
+```{python}
+batch_size = 64
+
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
+dev_loader = DataLoader(dev_data, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=8)
+input_dim = X_train.shape[1]
+latent_dim = 64
+
+ae_model = Autoencoder(input_dim=input_dim, latent_dim=latent_dim)
+from livelossplot import PlotLosses
+plotlosses = PlotLosses()
+```
+
+```{python}
+# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
+train(ae_model, train_loader, dev_loader, max_epochs=3000, learning_rate=1e-4, plotlosses=plotlosses)
+```
+
+With a nonlinear autoencoder, we no longer have just a matrix projecting the data, and therefore we can't display the "components" as if they were images as we did with PCA. However, we can still look at the reconstructions as well as visualize the latent space by projecting the data through the encoder and applying UMAP to the resulting latent representations.
+
+```{python}
+visualized_reconstruction(X_train, ae_model, n_examples=5)
+```
+
+```{python}
+visualize_latent_space(X_train, y_train, ae_model)
+```
+
+## How does size of latent space affect representation learned?
+
+```{python}
+batch_size = 64
+
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True)
+dev_loader = DataLoader(dev_data, batch_size=batch_size, shuffle=False, drop_last=False)
+input_dim = X_train.shape[1]
+# We make the latend and hidden dimension the same size as the input
+latent_dim = input_dim
+hidden_dim = input_dim
+
+full_size_ae_model = Autoencoder(input_dim=input_dim, encoder_dims=[hidden_dim], decoder_dims=[hidden_dim], latent_dim=latent_dim)
+
+from livelossplot import PlotLosses
+plotlosses = PlotLosses()
+```
+
+
+```{python}
+# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
+train(full_size_ae_model, train_loader, dev_loader, max_epochs=100, device='cpu', learning_rate=1e-3, plotlosses=plotlosses)
+```
+
+
+```{python}
+visualized_reconstruction(X_train, full_size_ae_model, n_examples=5)
+```
+
+```{python}
+visualize_latent_space(X_train, y_train, full_size_ae_model)
+```
+
+
+## Tweaking the architecture
+
+When we've gone from a linear model to a nonlinear one, we have a lot more freedom in exactly how the nonlinear functions should be constructed; essentially going from a single choice (the linear projection) to an infinite number of choices (the architecture of the nonlinear autoencoder). An essential part of deep learning is experimenting with how these choices of architecture affect _how_ the model actually solves the problem. 
+
+ ```{python}
+# You can experiment with different architectures by changing the `encoder_dims` and `decoder_dims` arguments when instantiating the `Autoencoder` class. 
+latent_dim = 4
+decoder_heavy_ae_model = Autoencoder(input_dim=input_dim,  
+                                    latent_dim=latent_dim, 
+                                    encoder_dims=[512], 
+                                    decoder_dims=[4096, 4096])
+from livelossplot import PlotLosses
+plotlosses = PlotLosses()
+```
+
+ ```{python}
+fig = go.FigureWidget()
+fig.add_scatter(y=[], name='loss')
+display(fig)
+
+for epoch in range(100):
+    # ... training ...
+    fig.data[0].y += (epoch,)
+```
+
+```{python}
+# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
+train(decoder_heavy_ae_model, train_loader, dev_loader, max_epochs=100, device='cpu', learning_rate=1e-3, plotlosses=plotlosses)
+```
+
+```{python}
+visualized_reconstruction(X_train, decoder_heavy_ae_model, n_examples=5)
+```
+
+```{python}
+visualize_latent_space(X_train, y_train, decoder_heavy_ae_model)
+```
+
+
+## Convolutional Autoencoder
+
+```{python}
+
+class ConvAEBlock(nn.Module):
+    def __init__(self, input_dim, output_dim, stride=2, padding='same', activation_function = 'leaky_relu'):
+        super(ConvAEBlock, self).__init__()
+        self.conv = nn.Conv2d(input_dim, output_dim, stride=stride, padding=padding)
+        self.normalization = nn.LayerNorm(output_dim)
+        self.dropout = nn.Dropout(0.1)
+        self.activation_function = activation_function
+    
+    def forward(self, x):
+        pre_activation = self.conv(x)
+        pre_activation = self.normalization(pre_activation)
+        if self.activation_function == 'leaky_relu':
+            activation = nn.functional.leaky_relu(pre_activation)
+        elif self.activation_function == 'relu':
+            activation = nn.functional.relu(pre_activation)
+        else:
+            activation = pre_activation
+        activation = self.dropout(activation)
+        return activation
+
+
+class ConvAutoencoder(nn.Module):
+    def __init__(self, input_dim, latent_dim=16, encoder_dims=[256, 256, 256, 256], decoder_dims=[256, 256, 256, 256]):
+        super(ConvAutoencoder, self).__init__()
+        # We create an explicit list of layers so that we can easily inspecit them and compose them how we'd like in the forward method. We could also have used `nn.Sequential` for the encoder and decoder, but this way we have more flexibility in how we compose the layers in the forward method, and we can also easily add skip connections or other architectural features if we want to experiment with that later on.
+        self.latent_dim = latent_dim
+        self.encoder_layers = nn.ModuleList()
+        dim_from_below = input_dim
+        for encoder_dim in encoder_dims:        
+            dense_layer = ConvAEBlock(dim_from_below, encoder_dim, activation_function='leaky_relu')
+            self.encoder_layers.append(dense_layer)
+            dim_from_below = encoder_dim
+        self.inner_layer = nn.Linear(dim_from_below, latent_dim, bias=True)
+
+        self.decoder_layers = nn.ModuleList()
+        dim_from_above = latent_dim
+        for decoder_dim in decoder_dims:
+            dense_layer = ConvAEBlock(dim_from_above, decoder_dim, activation_function='leaky_relu')
+            self.decoder_layers.append(dense_layer)
+            dim_from_above = decoder_dim
+        self.final_layer = nn.Linear(dim_from_above, input_dim, bias=True)
+
+    def forward(self, x):
+        z = self.encode(x)
+        x_hat = self.decode(z)
+        return x_hat
+    
+    def encode(self, x):
+        z = x
+        for layer in self.encoder_layers:
+            z = layer(z)
+        z = nn.functional.
+        z = self.inner_layer(z)
+        z = nn.functional.normalize(z, dim=-1)
+        return z
+    
+    def decode(self, z):
+        # We apply a nonlinearity after each layer except the last one, which is the output layer that reconstructs the original data. We skip using a non-linearity because we don't want to squash the range of the output values, as we want to be able to reconstruct the original data as accurately as possible.
+        for layer in self.decoder_layers:
+            z = layer(z)
+        z = self.final_layer(z)
+        return z
+```
+
