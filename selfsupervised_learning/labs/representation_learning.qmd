@@ -725,7 +725,7 @@ plotlosses = PlotLosses()
 
 ```{python}
 # Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
-train(full_size_ae_model, train_loader, dev_loader, max_epochs=100, device='cpu', learning_rate=1e-3, plotlosses=plotlosses)
+train(full_size_ae_model, train_loader, dev_loader, max_epochs=100, learning_rate=1e-3, plotlosses=plotlosses)
 ```
 
 
@@ -754,13 +754,18 @@ plotlosses = PlotLosses()
 ```
 
  ```{python}
+import plotly.graph_objects as go
+import time
 fig = go.FigureWidget()
-fig.add_scatter(y=[], name='loss')
+fig.add_scatter(y=[], name='val loss')
+fig.add_scatter(y=[], name='train loss')
 display(fig)
 
 for epoch in range(100):
     # ... training ...
-    fig.data[0].y += (epoch,)
+    fig.data[0].y += (np.sin(epoch),)
+    fig.data[1].y += (np.sin(epoch*0.5),)
+    time.sleep(0.4)
 ```
 
 ```{python}
@@ -832,7 +837,9 @@ class ConvAutoencoder(nn.Module):
         z = x
         for layer in self.encoder_layers:
             z = layer(z)
-        z = nn.functional.
+        # The last layer will have an output tensor of shape (batch_dim, n_channels, height, width).
+        # We want to pool over the spatial dimensions
+        
         z = self.inner_layer(z)
         z = nn.functional.normalize(z, dim=-1)
         return z
