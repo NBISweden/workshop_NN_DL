@@ -1,0 +1,37 @@
+name: Render useful_cells notebook
+
+on:
+  push:
+    branches:
+      - common-assets
+    paths:
+      - examples/useful_cells.qmd
+
+jobs:
+  render-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          environments: teachers
+
+      - name: Render QMD to IPYNB
+        run: |
+          pixi run -e teachers quarto render examples/useful_cells.qmd \
+            --to ipynb \
+            --no-execute
+
+      - name: Create GitHub release with notebook asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="notebook-${{ github.sha }}"
+          gh release create "$TAG" \
+            examples/useful_cells.ipynb \
+            --title "useful_cells notebook @ ${{ github.sha }}" \
+            --notes "Auto-rendered from [${GITHUB_SHA::8}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"

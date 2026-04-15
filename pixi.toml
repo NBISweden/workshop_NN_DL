@@ -73,7 +73,7 @@ r-pdftools = ">=3.7.0,<4"
 r-devtools = ">=2.5.0,<3"
 
 [environments]
-teachers = ["torch"]
+teachers = ["torch", "quarto", "pythonlibs"]
 basics = ["torch", "rise-jupyter"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
 rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
