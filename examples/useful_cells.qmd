@@ -69,6 +69,7 @@ class LivePlot():
 ```
 
 You can test it out running the cells below. It highlights how the figure can be updated interactively without having to create a new one (try to run the second cell with the `for`loop multiple times).
+
 ```{python}
 plot = LivePlot()
 i = 0
