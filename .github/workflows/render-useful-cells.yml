@@ -6,6 +6,8 @@ on:
       - common-assets
     paths:
       - examples/useful_cells.qmd
+      - pixi.lock
+  workflow_dispatch:
 
 jobs:
   render-and-release:
