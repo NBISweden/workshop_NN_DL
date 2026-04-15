@@ -21,11 +21,14 @@ torch = ">=2.10.0, <3"
 
 # ROCm torch — install from the AMD ROCm PyPI index (for local AMD GPU use)
 [feature.rocm.pypi-options]
-extra-index-urls = ["https://download.pytorch.org/whl/rocm6.2"]
+extra-index-urls = ["https://download.pytorch.org/whl/rocm7.2"]
+
+[feature.rocm.dependencies]
+setuptools = "<82"
 
 [feature.rocm.pypi-dependencies]
-torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm6.2" }
-torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm6.2" }
+torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm7.2" }
+torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm7.2" }
 
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
@@ -42,6 +45,18 @@ jupyterquiz = ">=2.9.6.4, <3"
 pyyaml = "*"
 tqdm = ">=4.67.3, <5"
 jupyter-cache = ">=1.0.1, <2"
+pillow = "*"
+scipy = "*"
+scikit-image = "*"
+livelossplot = ">=0.5.6, <0.6"
+medmnist = ">=3.0.2, <4"
+
+[feature.pythonlibs.dependencies]
+pyyaml = ">=6.0.3,<7"
+seaborn = ">=0.13.2,<0.14"
+umap-learn = ">=0.5.12,<0.6"
+plotly = ">=6.6.0,<7"
+anywidget = ">=0.10.0,<0.11"
 
 [feature.torchvision.pypi-dependencies]
 torchvision = "*"
@@ -63,7 +78,6 @@ r-devtools = ">=2.5.0,<3"
 [feature.manim.dependencies]
 ffmpeg = ">=7,<8"
 manim = ">=0.18"
-#pangocairo = ">=1.30.0"
 
 #[feature.manim.dependencies]
 #manim = ">=0.18,<1"
@@ -71,5 +85,5 @@ manim = ">=0.18"
 [environments]
 teachers = ["torch"]
 basics = ["torch", "rise-jupyter"]
-local-amd = ["rocm", "rise-jupyter", "quarto", "manim", "pythonlibs"]
+local-amd = ["rocm", "rise-jupyter", "quarto", "manim", "pythonlibs", "torchvision"]
 rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
