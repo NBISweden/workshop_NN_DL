@@ -10,25 +10,31 @@ DP_STAMP  = $(STAMPS)/dot_product.done
 SPL_STAMP = $(STAMPS)/supervised_learning_labeling.done
 RL_STAMP  = $(STAMPS)/representation_learning.done
 TL_STAMP  = $(STAMPS)/transfer_learning.done
+AE_STAMP  = $(STAMPS)/autoencoder.done
+SSP_STAMP = $(STAMPS)/selfsupervised_principle.done
+PCA_STAMP = $(STAMPS)/pca.done
 
-.PHONY: all slides media clean dp rl tl
+.PHONY: all slides media clean dp rl tl ae ssp pca
 
 all: slides
 
 slides: $(LECTURE).html
 
-$(LECTURE).html: $(LECTURE).qmd $(DP_STAMP) $(SPL_STAMP) $(RL_STAMP) $(TL_STAMP) $(VIZ_PY)
+$(LECTURE).html: $(LECTURE).qmd $(DP_STAMP) $(SPL_STAMP) $(RL_STAMP) $(TL_STAMP) $(AE_STAMP) $(SSP_STAMP) $(VIZ_PY)
 	rm -rf $(LECTURE)_files/
 	quarto render $(LECTURE).qmd --to revealjs
 
 # Render all Manim scenes
-media: $(DP_STAMP) $(SPL_STAMP) $(RL_STAMP) $(TL_STAMP)
+media: $(DP_STAMP) $(SPL_STAMP) $(RL_STAMP) $(TL_STAMP) $(AE_STAMP) $(SSP_STAMP) $(PCA_STAMP)
 
 # Individual scene shortcuts
 dp: $(DP_STAMP)
 spl: $(SPL_STAMP)
 rl: $(RL_STAMP)
 tl: $(TL_STAMP)
+ae: $(AE_STAMP)
+ssp: $(SSP_STAMP)
+pca: $(PCA_STAMP)
 
 $(STAMPS):
 	mkdir -p $(STAMPS)
@@ -47,6 +53,18 @@ $(RL_STAMP): viz/representation_learning.py | $(STAMPS)
 
 $(TL_STAMP): viz/transfer_learning.py | $(STAMPS)
 	manim render --format $(FORMAT) viz/transfer_learning.py TransferLearningScene
+	touch $@
+
+$(AE_STAMP): viz/autoencoder.py | $(STAMPS)
+	manim render --format $(FORMAT) viz/autoencoder.py AutoencoderScene
+	touch $@
+
+$(SSP_STAMP): viz/selfsupervised_principle.py | $(STAMPS)
+	manim render --format $(FORMAT) viz/selfsupervised_principle.py SelfsupervisedPrincipleScene
+	touch $@
+
+$(PCA_STAMP): viz/pca.py | $(STAMPS)
+	manim render --format $(FORMAT) viz/pca.py PCAScene
 	touch $@
 
 clean:

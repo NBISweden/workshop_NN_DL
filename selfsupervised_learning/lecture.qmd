@@ -149,10 +149,12 @@ The way we represent data has a huge impact on how easy a problem is to solve. T
 
 ## Principal Component Analysis (PCA)
 
-PCA is a method of learning linear representations that capture the most variance in data.
-
-## Visualizing representations with UMAP
-
+```{python}
+#| echo: false
+#| eval: true
+from viz.pca import pca_visualization
+pca_visualization()
+```
 
 ## Neural Networks learn representations from data
 
@@ -185,13 +187,21 @@ While there are many advantages to deep representation learning, one powerful co
 
 What if we can use the data it*self* to drive the learning of representations?
 
-[![Self-supervised learning - Yan LeCun](./media/images/static/self_supervised_learning_lecun.png){fig-align="center" width="80%"}](https://youtu.be/7I0Qt7GALVk?si=-PPdfqhuaDKVJK4k)
+```{python}
+#| echo: false
+#| eval: true
+from viz.selfsupervised_principle import selfsupervised_principle_visualization
+selfsupervised_principle_visualization()
+```
+
+
+<!-- [![Self-supervised learning - Yan LeCun](./media/images/static/self_supervised_learning_lecun.png){fig-align="center" width="80%"}](https://youtu.be/7I0Qt7GALVk?si=-PPdfqhuaDKVJK4k) -->
 
 ::: {.notes}
 Transfer learning is promising, but requires large amounts of labeled data to learn useful representations from. Manually annotating data is expensive and time-consuming. Self-supervised learning is a paradigm that allows us to learn useful representations without manual annotation by creating labels from the data itself.
 :::
 
-## What is an Autoencoder?
+## Autoencoders
 
 An autoencoder is a neural network trained to:
 
@@ -200,19 +210,35 @@ An autoencoder is a neural network trained to:
 
 $$\mathcal{L} = \|x - \hat{x}\|^2$$
 
+
+```{python}
+#| echo: false
+#| eval: true
+from viz.autoencoder import autoencoder_visualization
+autoencoder_visualization()
+```
+
 ::: {.notes}
 The key insight: the network learns a compressed representation without labels.
 :::
 
-## Architecture
+## Architecture {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
 
 ```{python}
 #| echo: true
+#| eval: false
+
 import torch
 import torch.nn as nn
 
 class Autoencoder(nn.Module):
-    def __init__(self, input_dim=784, latent_dim=32):
+    def __init__(self, 
+                 input_dim=784, 
+                 latent_dim=32):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 256),
@@ -223,7 +249,6 @@ class Autoencoder(nn.Module):
             nn.Linear(latent_dim, 256),
             nn.ReLU(),
             nn.Linear(256, input_dim),
-            nn.Sigmoid(),
         )
 
     def forward(self, x):
@@ -231,12 +256,16 @@ class Autoencoder(nn.Module):
         return self.decoder(z)
 ```
 
-## Training
+:::
+
+::: {.column width="50%"}
 
 ```{python}
 #| echo: true
+#| eval: false
 model = Autoencoder()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(model.parameters(),
+                             lr=1e-3)
 criterion = nn.MSELoss()
 
 # Training loop sketch
@@ -248,6 +277,11 @@ def train_step(x):
     optimizer.step()
     return loss.item()
 ```
+
+:::
+
+::::
+
 
 ::: {.notes}
 Note that we use the input as both input and target — no labels needed.
@@ -279,6 +313,8 @@ orthogonal = 0; opposite = −1.
 :::
 
 ## Latent Space Visualization
+
+### Visualizing representations with UMAP
 
 ```{python}
 #| echo: true
