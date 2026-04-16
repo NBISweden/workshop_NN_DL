@@ -8,18 +8,28 @@ version = "0.1.0"
 [tasks]
 
 [dependencies]
-python = ">=3.13.0,<3.14"
+python = ">=3.12.0,<3.13"
 curl = ">=8.19.0,<9"
 git = ">=2.53.0,<3"
 
-[environments]
-teachers = []
-basics = ["rise-jupyter", "quarto"]
-
 [pypi-dependencies]
-torch = ">=2.10.0, <3"
 jupyter = ">=1.1.1, <2"
 matplotlib = ">=3.10.8, <4"
+plotly = ">=6.7.0, <7"
+anywidget = ">=0.10.0, <0.11"
+
+# Default (CPU / generic) torch — used by teachers and basics environments
+[feature.torch.pypi-dependencies]
+torch = ">=2.10.0, <3"
+torchmetrics = ">=1.9.0, <2"
+
+# ROCm torch — install from the AMD ROCm PyPI index (for local AMD GPU use)
+[feature.rocm.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/rocm6.2"]
+
+[feature.rocm.pypi-dependencies]
+torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm6.2" }
+torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm6.2" }
 
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
@@ -27,4 +37,9 @@ jupytext = ">=1.19.1, <2"
 
 [feature.quarto.dependencies]
 quarto = "*"
+
+[environments]
+teachers = ["torch"]
+basics = ["torch", "rise-jupyter", "quarto"]
+local-amd = ["rocm", "rise-jupyter"]
 
