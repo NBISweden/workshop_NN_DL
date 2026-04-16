@@ -1,0 +1,225 @@
+---
+title: "Example: useful cells"
+jupyter: 
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+format:
+  html:
+    code-fold: true
+description: Notebook containing useful cells for labs
+execute:
+  eval: true
+---
+
+## Running on colab
+
+You can use this
+[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/example/useful_cells.ipynb)
+to run the notebook on Google Colab. If you do so, it's advised that
+you first make a copy to your own Google Drive before starting your
+work on the notebook. Otherwise changes you make to the notebook will
+not be saved.
+
+## Training
+
+### Live plot
+This cell defines a simple live plot
+```{python}
+from typing import Optional
+
+import plotly.graph_objects as go
+ 
+
+class LivePlot():
+    def __init__(self):
+        self.fig = fig = go.FigureWidget()
+        self.plot_indices = {}
+        display(self.fig)
+        self.limits = [0,0]
+        self.current_x = 0
+        
+    def report(self, name: str, value: float):
+        "Report new value for line `name` of the current time step. Use "
+        try:
+            plot_index = self.plot_indices[name]
+        except KeyError:
+            plot_index = len(self.fig.data)
+            self.fig.add_scatter(y=[], x=[], name=name)
+            self.plot_indices[name] = plot_index
+        self.fig.data[plot_index].y += (value,)
+        self.fig.data[plot_index].x += (self.current_x,)
+
+    def increment(self, n_ticks: int):
+        "Increment the currently displayed limits with these many ticks"
+        self.limits[1] += n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+    
+    def set_limit(self, n_ticks: int):
+        "Update the currently displayed to exactly these many ticsk"
+        self.limits[1] = n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+
+    def tick(self, n_ticks: Optional[int] = None):
+        "Update the current time with these many ticks, or 1 tick if no argument is supplied."
+        if n_ticks is None:
+            n_ticks = 1
+        self.current_x += n_ticks
+```
+
+You can test it out running the cells below. It highlights how the figure can be updated interactively without having to create a new one (try to run the second cell with the `for`loop multiple times).
+
+```{python}
+plot = LivePlot()
+i = 0
+```
+```{python}
+plot.increment(5)
+
+for n in range(5):
+    plot.tick()
+    plot.report("dev loss", i**2)
+    i+=1
+```
+
+## Training loop
+
+This is a boilerplate training loop for running the training loop a certain number of epochs
+
+```{python}
+import torch
+from torch.utils.data import DataLoader
+from torch.nn import Module
+import torch.nn as nn
+
+def train(*,
+          model: Module, 
+          train_loader: DataLoader, 
+          dev_loader: DataLoader, 
+          optimizer: torch.optim.Optimizer, 
+          criterion: torch.nn.Module, 
+          max_epochs: int,
+          device: Optional[torch.device] = None,  
+          liveplot: Optional[LivePlot]=None):
+    if device is None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+  
+
+    model.to(device)
+    
+    for epoch in range(max_epochs):
+        training_loss_acc = 0
+        training_examples = 0
+        model.train()
+        
+        for i, batch in enumerate(train_loader):
+            optimizer.zero_grad()
+            
+            x_batch, y_batch = batch
+            x_batch = x_batch.to(device)  
+            y_hat = model(x_batch)
+
+            loss = criterion(y_hat, y_batch.to(device))
+            loss.backward()
+
+            optimizer.step()
+            training_loss_acc += loss.item()
+            training_examples += x_batch.size(0)
+        
+        model.eval()
+        with torch.no_grad():
+            dev_loss_acc = 0
+            dev_examples = 0
+            for batch in dev_loader:
+                x_batch, y_batch = batch
+                x_batch = x_batch.to(device)
+                y_hat = model(x_batch)
+                dev_loss_acc += criterion(y_hat, y_batch.to(device)).item()
+                dev_examples += x_batch.size(0)
+        
+        if liveplot is not None:
+            liveplot.tick() # Update the liveplot time
+            liveplot.report("Training loss", training_loss_acc / training_examples)
+            liveplot.report("Development loss", dev_loss_acc / dev_examples)
+
+```
+
+
+### Example usage of training loop
+
+#### Set up dummy data
+```{python}
+import numpy as np
+from torch.utils.data import Dataset, DataLoader, TensorDataset
+
+# Set up data and torch dataloaders
+
+n_samples = 2**10
+x = np.linspace(-2*np.pi, 2*np.pi, n_samples)
+x = x[:, None]  # Batching torch will behave weirdly unless x is a column vector
+y = np.sin(x)
+rng = np.random.default_rng(1729)
+random_index = rng.permutation(n_samples)
+random_index
+
+train_ratio = 7/8
+train_indices = random_index[:int(n_samples*train_ratio)]
+dev_indices = random_index[int(n_samples*train_ratio):]
+assert(len(set(train_indices) & set(dev_indices)) == 0)
+train_x, train_y = x[train_indices], y[train_indices]
+dev_x, dev_y = x[dev_indices], y[dev_indices]
+
+train_dataset = TensorDataset(torch.tensor(train_x, dtype=torch.float32), torch.tensor(train_y, dtype=torch.float32))
+dev_dataset = TensorDataset(torch.tensor(dev_x, dtype=torch.float32), torch.tensor(dev_y, dtype=torch.float32))
+
+batch_size = 32
+train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
+dev_loader = DataLoader(dev_dataset, shuffle=False, batch_size=batch_size)
+```
+
+#### Setup the model
+
+We'll create a simple multilayer perceptron to train
+
+```{python}
+# Setup model, loss function and optimizer
+
+
+class MLP(torch.nn.Module):
+    def __init__(self, input_dim, output_dim, hidden_dim):
+        super().__init__()
+        self.h1 = torch.nn.Linear(input_dim, hidden_dim)
+        self.h2 = torch.nn.Linear(hidden_dim, output_dim)
+    def forward(self, x):
+        z = self.h1(x)
+        a = torch.tanh(z)
+        y_hat = self.h2(a)
+        return y_hat
+        
+model = MLP(input_dim=1, output_dim=1, hidden_dim=256)
+
+learning_rate = 1e-3
+weight_decay = 1e-5
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+criterion = nn.MSELoss()
+```
+
+#### Live plotting
+
+Now we can start the training. We'll create a plot in a different cell than the training, that way we keep the history of the training around.
+
+```{python}
+# Setup plot
+liveplot = LivePlot()
+```
+
+#### Run training
+
+Each time the train function is called, the model is trained another `max_epoch` number of epochs.
+
+```{python}
+epochs=20
+liveplot.increment(20)
+train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=epochs, liveplot=liveplot)
+```
