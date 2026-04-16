@@ -8,4 +8,4 @@ _extensions
 lecture.html
 labs/data
 labs/media
-
+*.ipynb
