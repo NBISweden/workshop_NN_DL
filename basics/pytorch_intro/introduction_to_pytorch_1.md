@@ -1,7 +1,7 @@
 ---
 jupyter:
   jupytext:
-    formats: ipynb,qmd,md
+    formats: ipynb,md
     text_representation:
       extension: .md
       format_name: markdown
@@ -13,7 +13,7 @@ jupyter:
     name: python3
 ---
 
-<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
 # Intro to programming and training Neural Networks with PyTorch
 
 
@@ -43,7 +43,7 @@ jupyter:
 <!-- #region slideshow={"slide_type": "slide"} -->
 ## Docs: https://docs.pytorch.org/docs
 
-* Installation inscructions (you should be already set up!)
+* Installation instructions (you should be already set up!)
 * Tutorials from the groud up
 * Reference API
   * Models and Layers
@@ -52,12 +52,14 @@ jupyter:
 
 <!-- #endregion -->
 
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Other ML/DL libraries
 
 * Tensorflow/Keras
 * JAX
 * ...
 * Most concepts translate across libraries with minor differences
+<!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
 ## Some terminology
@@ -81,8 +83,6 @@ The main variables in PyTorch are tensors:
 > Src: https://www.kaggle.com/discussions/getting-started/159424
 
 
-
-
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
@@ -92,17 +92,23 @@ The main variables in TensorFlow are, of course, tensors:
 
 > A tensor is often thought of as a generalized matrix. That is, it could be a 1-D matrix (a vector), a 3-D matrix (something like a cube of numbers), even a 0-D matrix (a single number), or a higher dimensional structure that is harder to visualize. The dimension of the tensor is called its rank.
 
-## TensorFlow operates on tensors
+## PyTorch operates on tensors
 
-> TensorFlow computations are expressed as stateful dataflow graphs. The name TensorFlow derives from the operations that such neural networks perform on multidimensional data arrays, which are referred to as tensors.
+> Tensors are a specialized data structure that are very similar to arrays and matrices. In PyTorch, we use tensors to encode the inputs and outputs of a model, as well as the model’s parameters.
+> 
+> Tensors are similar to NumPy’s ndarrays, except that tensors can run on GPUs or other hardware accelerators.
+>
+> Src: https://docs.pytorch.org/tutorials/beginner/basics/tensorqs_tutorial.html
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
 ## The first step is to build a graph of operations
 
-* NNs are defined in TensorFlow as graphs through which the data flows until the final result is produced
+* NNs are defined in PyTorch as graphs through which the data flows until the final result is produced
 * Before we can do any operation on our data (images, etc) we need to build the graph of tensor operations
-* When we have a full graph built from input to output, we can run (flow) our data (training or testing) through it.
+* When we have a full graph built from input to output, we can run our data (training or testing) through it.
+
+> (PyTorch implements) Over 1200 tensor operations, including arithmetic, linear algebra, matrix manipulation (transposing, indexing, slicing), sampling and more (...)
 
 <!-- #endregion -->
 
@@ -132,58 +138,72 @@ The dimensions between tensors coming out of the $i$-th node and those going int
 
 * If each sample in our dataset is made of 10 features, the first (input) layer must accept a tensor of shape $(n, 10)$
 * If the first layer in our NN outputs a 3D tensor, the second layer must accept a 3D tensor as input
-* Check the documentation to make sure what input-output shapes are allowed ([example](https://keras.io/api/layers/convolution_layers/convolution1d/))
+* Check the documentation to make sure what input-output shapes are allowed ([example](https://docs.pytorch.org/docs/stable/generated/torch.nn.Conv1d.html))
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
-## Here's how a NN layer looks like in TensorFlow:
+## Here's how a NN layer might look like in PyTorch:
 
 * 7 samples in batch
 * 784 inputs
 * 500 outputs
 
-<center><img src="figures/run_metadata_graph.png"></center>
+<center><img src="figures/nn_layer_tboard.png"></center>
+
 <!-- #endregion -->
 
-<!-- #region jp-MarkdownHeadingCollapsed=true slideshow={"slide_type": "slide"} -->
-## Here is how a model is built and trained in Keras
+<!-- #region slideshow={"slide_type": "slide"} -->
+## Here is how a model is built and trained
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "-"} -->
+
 ```python
+import torch
+import torch.nn as nn
+
+
 #Multi-layer perceptron (one hidden layer)
-model = Sequential()
-model.add(Dense(3, input_dim=3, activation='sigmoid'))
-model.add(Dense(1, activation='sigmoid'))
+model = nn.Sequential()
+model.append(nn.Linear(3, 3))
+model.append(nn.Sigmoid())
+model.append(nn.Linear(3, 1))
+model.append(nn.Sigmoid())
 
 #Gradient descent algorithm, Mean Squared Error as Loss function
-model.compile(optimizer='sgd', loss='mse', metrics=['mse'])
+loss = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
-#Training for 10 iterations of the data (epochs)
-history = model.fit(data, labels, epochs=10, batch=32)
+dataset = ... # define dataset. More on this later
+
+for features, label in dataset:
+    optimizer.zero_grad()
+    prediction = model(features)
+    loss = loss_fn(prediction, label)
+    loss.backward()
+    optimizer.step()
 ...
 ```
 <!-- #endregion -->
 
 What does each bit do?
 
-<!-- #region cell_style="center" jp-MarkdownHeadingCollapsed=true slideshow={"slide_type": "slide"} -->
-## A neural network in Keras is called a Model
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
+## A neural network in PyTorch is called a Model
 
 The simplest kind of model is of the Sequential kind:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"}
-#from tensorflow.keras.models import Sequential
-#model = Sequential()
-
+```python cell_style="center" slideshow={"slide_type": "-"} editable=true
 import torch
+import torch.nn as nn
+import torch.optim as optim
 
-torch.nn.Linear(4, 8)(torch.tensor([1.0, 1.0, 0.0, -1]))
-
+model = nn.Sequential()
+print(list(model.parameters()))
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 This is an "empty" model, with no layers, no inputs or outputs are defined either.
 
 Adding layer is easy. Let's say we have data for participants to a clinical study. For participant we have recorded: blood pressure, BMI and age.
@@ -193,16 +213,15 @@ The participants have been diagnosed as healthy or sick, these will be our label
 We could define a simple NN that predicts if a participant is healthy or sick as follows:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"}
-from tensorflow.keras.layers import Dense
-model = Sequential()
-#model.add(Dense(units=2, input_dim=3, activation="softmax"))
-model.add(Dense(units=4, activation='relu', input_dim=3, name="input"))
-model.add(Dense(units=2, activation='softmax', name="output"))
-
+```python cell_style="center" slideshow={"slide_type": "-"} editable=true
+model = nn.Sequential()
+model.append(nn.Linear(3, 4))
+model.append(nn.ReLU())
+model.append(nn.Linear(4, 2))
+model.append(nn.Softmax())
 ```
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+<!-- #region slideshow={"slide_type": "fragment"} editable=true -->
 
 A "Dense" layer is a fully connected layer as the ones we have seen in Multi-layer Perceptrons.
 The above is equal to having this network:
@@ -211,63 +230,56 @@ The above is equal to having this network:
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 If we want to see the layers in the Model this far, we can just call:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
-model.summary()
+```python slideshow={"slide_type": "-"} editable=true
+list(model.parameters())
 ```
 
 <!-- #region slideshow={"slide_type": "-"} -->
-Notice the number of parameters, can you tell why 12 and 8 parameters for each layer?
+Notice the number of parameters, can you tell why there are this many?
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
-Using "model.add()" keeps stacking layers on top of what we have:
+Using "model.append()" keeps stacking layers on top of what we have:
 <!-- #endregion -->
 
-```python
-model.add(Dense(units=2, activation=None))
-model.summary()
+```python editable=true slideshow={"slide_type": ""}
+model.append(nn.Linear(2, 2))
+model
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} -->
 One can also declare the model in one go, by passing a list of layers to Sequential() like so:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
-model = Sequential([
-    Dense(units=4, activation='relu', input_dim=3),
-    Dense(units=2, activation='softmax'),
-    Dense(units=2, activation=None)
-])
+```python slideshow={"slide_type": "-"} editable=true
+model = nn.Sequential(
+    nn.Linear(3, 4),
+    nn.ReLU(),
+    nn.Linear(4, 2),
+    nn.Sigmoid()
+)
 
-model.summary()
+model
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-If we want to see the layers in the Model this far, we can just call:
-<!-- #endregion -->
-
-```python slideshow={"slide_type": "-"}
-from tensorflow.keras.utils import plot_model
-
-plot_model(model, "figures/simplenet_model.png", show_shapes=True)
-```
-
+<!-- #region editable=true slideshow={"slide_type": ""} -->
 ## Small exercise
 
-* Can you write code to make a simple NN model on Keras?
+* Can you write code to build a simple NN model?
 * Open the `exercises` jupyter notebook
+<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Keras layers (https://keras.io/api/layers/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## PyTorch layers (https://docs.pytorch.org/docs/stable/nn.html)
 
 Common layers (we will cover most of these!)
 
 * Trainable
-    * <font color='red'>Dense (fully connected/MLP)</font>
+    * <font color='red'>Linear (fully connected/MLP)</font>
     * <font color='red'>Conv1D (2D/3D)</font>
     * <font color='red'>Recurrent: LSTM/GRU/Bidirectional</font>
     * <font color='red'>Embedding</font>
@@ -283,67 +295,75 @@ Common layers (we will cover most of these!)
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Compiling a model
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## More things needed to train the model
 
-Once we have defined a model we want to "compile" it
+Once we have defined a model we need to at least define:
 
-This means chosing a Loss function and an Optimizer (the algorithm that finds the minimum loss possible).
+* a Loss function (calculate the prediction error against a set of labels)
+* an Optimizer (the algorithm that finds the minimum loss possible).
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
-model.compile(optimizer='rmsprop',                    #adaptive learning rate method
-              loss='sparse_categorical_crossentropy', #loss function for classification problems with integer labels
-              metrics=['accuracy'])                   #the metric doesn't influence the training
-
-model.optimizer.get_config()
+```python slideshow={"slide_type": "-"} editable=true
+loss = nn.MSELoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Losses (https://keras.io/api/losses/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Losses (https://docs.pytorch.org/docs/stable/nn.html#loss-functions)
 
-These are the functions used to evaluate and train the neural network
+These are the functions used to evaluate and train the neural network. Different losses are suited for different problems.
 
-Common losses for classification problems:
-* CategoricalCrossentropy
-* SparseCategoricalCrossentropy
-* KLDivergence
+Loss for classification problems:
+* Categorical Crossentropy
+
+Loss to compare distributions:
+* KL Divergence
 
 Common losses for regression problems:
-* MeanSquaredError
-* MeanAbsoluteError
+* Mean Squared Error
+* Mean Absolute Error
+
+A loss function is also called a `criterion` in pytorch code
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Metrics (https://keras.io/api/metrics/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Metrics (https://lightning.ai/docs/torchmetrics/stable/)
 
 Common metrics for classification:
-* Accuracy/CategoricalAccuracy (respectively for integer labels or one-hot labels)
-* SparseCategoricalCrossentropy/CategoricalCrossentropy (integer/one-hot labels)
+* Accuracy
 * Precision/Recall
 * AUC
 
 Common metrics for regression:
-* MeanSquaredError
-* MeanAbsoluteError
+* Mean Squared Error
+* Mean Absolute Error
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Metrics (https://keras.io/api/metrics/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Metrics (https://lightning.ai/docs/torchmetrics/stable/)
 
-Notice the "metrics" parameter, which accepts a list of values. Multiple metrics can be shown during training.
-Metrics are only to visualize how the training is going, they don't have an effect on training itself
+* While a Loss function can tell us how the training is going, these measures are not always intuitive
+* We sometimes what to have measures such as:
+    * accuracy (how often do we get the classification right?)
+    * AUC
+    * Correlation coefficients
+    * ...
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
-from tensorflow.keras.optimizers import RMSprop
-model.compile(optimizer=RMSprop(learning_rate=1.0),   #adaptive learning rate method
-              loss='sparse_categorical_crossentropy', #loss function for classification problems with integer labels
-              metrics=['accuracy', 'recall'])         #the metric doesn't influence the training
+```python slideshow={"slide_type": "-"} editable=true
+from torch import tensor
+from torchmetrics.classification import BinaryAccuracy
+
+target = tensor([0, 1, 0, 1, 0, 1])
+preds  = tensor([0, 0, 1, 1, 0, 1])
+
+metric = BinaryAccuracy()
+metric(preds, target)
 ```
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers (https://docs.pytorch.org/docs/stable/optim.html)
 
 * They are algorithms for gradient descent
 * A few to choose from:
@@ -354,7 +374,7 @@ model.compile(optimizer=RMSprop(learning_rate=1.0),   #adaptive learning rate me
 
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "skip"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "skip"} editable=true -->
 <br>
 <br>
 <br>
@@ -362,7 +382,7 @@ model.compile(optimizer=RMSprop(learning_rate=1.0),   #adaptive learning rate me
 <img src="figures/gradient_descent.png">
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
 ## Gradient Descent 
 
 We have seen how gradient descent works:
@@ -379,7 +399,7 @@ Pros/cons:
 * Will get stuck at local minimum
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "-"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
 <br>
 <br>
 <br>
@@ -387,7 +407,7 @@ Pros/cons:
 <img src="figures/gradient_descent.png">
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
 ## Stochastic Gradient Descent
 For each epoch:
 * Divide data in batch blocks of size $n < N$
@@ -403,7 +423,7 @@ Pros/cons:
 * Less likely to get stuck at local minimum
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "-"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
 <br>
 <br>
 <br>
@@ -411,15 +431,15 @@ Pros/cons:
 <img src="figures/gradient_descent.png">
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers
 
 We need to choose a learning rate to multiply to our gradient. If it is too small, we risk taking too long to get to a minimum
 <center><img src="figures/small_lr.png"></center>
 <!-- #endregion -->
 
-<!-- #region hideOutput=true slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region hideOutput=true slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers
 
 If it is too large, the network risks becoming unstable, explode
 
@@ -428,8 +448,8 @@ If it is too large, the network risks becoming unstable, explode
 Let's test different optimization strategies on Tensorflow playground: http://playground.tensorflow.org
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers
 
 Luckily there are algorithms to address these issues:
 * Increase descent speed when past gradients agree with current, slow down otherwise (momentum)
@@ -438,7 +458,7 @@ Luckily there are algorithms to address these issues:
 * Adaptive learning rate based on gradient
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "-"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
 <br>
 <br>
 <br>
@@ -446,8 +466,8 @@ Luckily there are algorithms to address these issues:
 <img src="figures/adaptive_lr.png">
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers
 
 * They are algorithms for gradient descent
 * A few to choose from:
@@ -464,67 +484,133 @@ Luckily there are algorithms to address these issues:
 
 <!-- #endregion -->
 
-<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
-## Optimizers (https://keras.io/api/optimizers/)
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
+## Optimizers
 <br>
 <br>
 <center><img src="figures/adam_et_al.png" width=500></center>
 <div style="text-align: right">("Adam: A Method for Stochastic Optimization", 2015)</div>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Training the model: fit() function (https://keras.io/api/models/model_training_apis/)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Training the model
 
 * We are almost ready to train the model, I swear
-* fit() is a method of the Model, actually launches training on a dataset with features and labels
-* X_train, y_train: features and labels
-* batch: how many samples between each weight update
-* epochs: how many times we iterate through the dataset
-* validation_data: used to evaluate the model at the end of every epoch, NOT used for training
+* Training is done in a loop over your data
+* For each sample (features, label):
+   * Predict: `prediction = model(features)`
+   * Assess error: `loss = criterion(prediction, label)`
+   * Backpropagate error, calculate gradients: `loss.backward()`
+   * Take a step along the gradient direction: `optimizer.step()`
 <!-- #endregion -->
 
-<!-- #region -->
+<!-- #region editable=true slideshow={"slide_type": ""} -->
 ```python
-model.fit(X_train, y_train, validation_data=(X_val, y_val), batch=32, epochs=10)
+for batch in dataset:
+    features, labels = batch
+    optimizer.zero_grad()
+    prediction = model(features)
+    loss = loss_fn(prediction, label)
+    loss.backward()
+    optimizer.step()
 ```
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Training the model: fit() function (https://keras.io/api/models/model_training_apis/)
+<!-- #region editable=true slideshow={"slide_type": "slide"} -->
+## Training the model, more in detail
 
-* Ok, last thing we need is the actual data, then we can train the model
+In reality, there are a few more things to keep track of. Here is a more complete version of a training loop:
 <!-- #endregion -->
 
-<!-- #region -->
+<!-- #region editable=true slideshow={"slide_type": ""} -->
 ```python
-model.fit(X_train, y_train, validation_data=(X_val, y_val), batch=32, epochs=10, validation_data=(X_val, y_val))
+# device: are we training on CPU or GPU?
+device = None
+if device is None:
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+# send the model to whatever device we're using
+model.to(device)
+    
+for epoch in range(max_epochs):
+    # reset metrics
+    training_loss_acc = 0
+    training_examples = 0
+    # put model in "training mode"
+    model.train()
+
+    # training loop, one epoch
+    for i, batch in enumerate(train_loader):
+        optimizer.zero_grad()
+        
+        x_batch, y_batch = batch
+        # send data to whatever device we're using
+        x_batch = x_batch.to(device)  
+        y_hat = model(x_batch)
+
+        loss = criterion(y_hat, y_batch.to(device))
+        loss.backward()
+
+        optimizer.step()
+        training_loss_acc += loss.item()
+        training_examples += x_batch.size(0)
 ```
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Training the model, more in detail
+
+* Let's not forget the actual data!
+* First, we define a `Dataset` as a set of tensor features and labels
+* Then, we define a `DataLoader` process the `Dataset` before handing it to the network
+* We can also split our data into two or more parts that will be used for different purposes
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
+```python
+train_data = Dataset(...)
+validation_data = Dataset(...)
+
+train_dataloader = DataLoader(train_data, ...)
+val_dataloader = DataLoader(validation_data, ...)
+
+for epoch in range(max_epochs):
+    ...
+    for features, label in train_dataloader:
+        ... # train your model
+
+    model.eval() # put the model in validation mode
+    with torch.no_grad(): # avoids computing stuff not needed at validation time
+        for val_batch in val_dataloader:
+            ... # evaluate your model
+```
+<!-- #endregion -->
+
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## What is this validation thing? Do I really need it?
 
 * Yes, yes you do
 * Helps understanding if the model is learning anything useful
-* Take some of your labelled data, set it aside, call it validation set and don't train on it
+* Take some of your labelled data, set it aside, call it **validation set** and don't train on it
+* Also called a **development set**
 * Evaluate model on validation set at the end of each epoch, see if model works on unseen data
 * If it works well on training set but not on validation set, you're overfitting
 
 <img src="figures/overfitting_class.png" width=300>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## What is this validation thing? Do I really need it?
 
 * If it works well on training set but not on validation set, you're overfitting
-* Validation data is used to adapt hyperparameters, select best models
-* Validation data is NOT testing data (more on this later)
+* Validation (or development) data is used to adapt hyperparameters, select best models
+* Validation (or development) data is **NOT** testing data (more on this later)
 * Let's try this on Tensorflow playground: http://playground.tensorflow.org
 
 <img src="figures/early_stopping.png" width=500>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Ok, can we PLEASE train a NN now?
 
 * Let's generate some artificial data, see what happens
@@ -533,100 +619,261 @@ model.fit(X_train, y_train, validation_data=(X_val, y_val), batch=32, epochs=10,
 * Random data
 <!-- #endregion -->
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 import numpy as np
 
 # Generate dummy data
 data = np.random.random((10000, 3))
-labels = np.random.randint(2, size=(10000, 1))
+labels = np.random.randint(2, size=(10000))
 
 #let's print the first sample (three floats) and its corresponding label:
-print(np.hstack((data[0:10,:], labels[0:10])))
+print(np.hstack((data[0:10,:], labels[..., None][0:10])))
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## We have the data, now make the model, compile it, train it
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## We have the data. Now we make the model, train it
 
-* At the last layer of a classifier use the _softmax_ activation (more on this later)
 * Batch size is 32, 10 epochs
 * Take 10% of the data, reserve it for validation
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "subslide"}
-model = Sequential()
-model.add(Dense(4, input_dim=3, activation='sigmoid'))
-model.add(Dense(3, activation='sigmoid'))
-model.add(Dense(2, activation='softmax'))
+```python slideshow={"slide_type": ""} editable=true
+from torch.utils.data import TensorDataset, DataLoader
+import torchmetrics
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-# Train the model, iterating on the data in batches of 32 samples
-history = model.fit(data, labels, epochs=10, batch_size=32, validation_split=0.1)
+device = None
+if device is None:
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+max_epochs = 10
+# convert the data and labels to tensors
+tdata = torch.Tensor(data)
+tlabels = torch.Tensor(labels).long()
+
+model = nn.Sequential(
+    nn.Linear(3, 3),
+    nn.Sigmoid(),
+    nn.Linear(3, 2),
+)
+
+model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+metric = BinaryAccuracy()
+optimizer = optim.Adam(model.parameters())
+
+dataset = TensorDataset(tdata, tlabels)
+# split the data randomly
+train_set, dev_set = torch.utils.data.random_split(dataset, [9000, 1000])
+
+# shuffle data at training time
+train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
+dev_loader = DataLoader(dev_set, batch_size=32)
+metric = torchmetrics.Accuracy(task='multiclass', num_classes=2, top_k=1)
+
+for epoch in range(max_epochs):
+    training_loss_acc = 0
+    training_examples = 0
+    model.train()
+    for i, batch in enumerate(train_loader):
+        x_batch, y_batch = batch
+        x_batch = x_batch.to(device)
+        y_hat = model(x_batch)
+
+        loss = criterion(y_hat, y_batch.to(device))
+        loss.backward()
+        optimizer.step()
+        training_loss_acc += loss.item()
+        training_examples += x_batch.size(0)
+
+    # training done for this epoch, validate:
+    model.eval()
+    with torch.no_grad():
+        dev_loss = 0
+        dev_acc = 0
+        dev_examples = 0
+        for i, batch in enumerate(dev_loader):
+            x_batch, y_batch = batch
+            x_batch = x_batch.to(device)
+            y_hat = model(x_batch)
+            dev_loss += criterion(y_hat, y_batch.to(device)).item()
+            dev_examples += x_batch.size(0)
+            dev_acc += metric(torch.argmax(y_hat, -1), y_batch)
+        print(f"Train loss: {training_loss_acc/training_examples}, dev loss: {dev_loss/dev_examples}, dev acc: {dev_acc.item() / (i+1):.2f}")
+
+        
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Let's visualize our training curves
 
 * Plots loss and accuracy for train and validation sets separately
 
 <!-- #endregion -->
 
-```python
-model = Sequential()
-model.add(Dense(4, input_dim=3, activation='tanh'))
-model.add(Dense(3, activation='tanh'))
-model.add(Dense(2, activation='softmax'))
+```python editable=true slideshow={"slide_type": ""}
+from typing import Optional
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io as pio
+pio.renderers.default = "iframe"
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-# Train the model, iterating on the data in batches of 32 samples
-history = model.fit(data, labels, epochs=10, batch_size=32, validation_split=0.1)
+class LivePlot():
+    def __init__(self, left_label="Loss", right_label="Accuracy"):
+        self.fig = go.FigureWidget(
+            make_subplots(specs=[[{"secondary_y": True}]])
+        )
+        self.fig.update_yaxes(title_text=left_label,  secondary_y=False)
+        self.fig.update_yaxes(title_text=right_label, secondary_y=True)
+
+        self.plot_indices = {}
+        self.trace_secondary = {}
+        display(self.fig)
+        self.limits = [0, 0]
+        self.current_x = 0
+
+    def report(self, name: str, value: float, secondary_y: bool = False):
+        try:
+            plot_index = self.plot_indices[name]
+        except KeyError:
+            plot_index = len(self.fig.data)
+            self.fig.add_scatter(
+                y=[], x=[], name=name,
+                secondary_y=secondary_y
+            )
+            self.plot_indices[name] = plot_index
+            self.trace_secondary[name] = secondary_y
+        self.fig.data[plot_index].y += (value,)
+        self.fig.data[plot_index].x += (self.current_x,)
+
+    def increment(self, n_ticks: int):
+        self.limits[1] += n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+
+    def set_limit(self, n_ticks: int):
+        self.limits[1] = n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+
+    def tick(self, n_ticks: Optional[int] = None):
+        if n_ticks is None:
+            n_ticks = 1
+        self.current_x += n_ticks
+
 ```
 
-```python
-%matplotlib inline
+<!-- #region editable=true slideshow={"slide_type": "slide"} -->
+# Cleaning up the code a bit
 
-import matplotlib.pyplot as plt
+We move the training loop into its own function:
+<!-- #endregion -->
 
-def plot_loss_acc(history):
-    try:
-        plt.plot(history.history['accuracy'])
-        plt.plot(history.history['val_accuracy'])
-    except:
-        plt.plot(history.history['acc'])
-        plt.plot(history.history['val_acc'])
+```python editable=true slideshow={"slide_type": ""}
+def train(*,
+          model: torch.nn.Module, 
+          train_loader: DataLoader, 
+          dev_loader: DataLoader, 
+          optimizer: torch.optim.Optimizer, 
+          criterion: torch.nn.Module, 
+          max_epochs: int,
+          device: Optional[torch.device] = None,  
+          liveplot: Optional[LivePlot]=None):
+    if device is None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train acc', 'val acc', 'train loss', 'val loss'], loc='upper left')
-    plt.show()
+    model.to(device)
+    metric = torchmetrics.Accuracy(task='multiclass', num_classes=2, top_k=1)
+    for epoch in range(max_epochs):
+        training_loss_acc = 0
+        training_examples = 0
+        model.train()
+        
+        for i, batch in enumerate(train_loader):
+            optimizer.zero_grad()
+            
+            x_batch, y_batch = batch
+            x_batch = x_batch.to(device)  
+            y_hat = model(x_batch)
 
+            loss = criterion(y_hat, y_batch.to(device))
+            loss.backward()
+
+            optimizer.step()
+            training_loss_acc += loss.item()
+            training_examples += x_batch.size(0)
+        
+        model.eval()
+        with torch.no_grad():
+            dev_loss_acc = 0
+            dev_examples = 0
+            dev_accuracy = 0
+            for i, batch in enumerate(dev_loader):
+                x_batch, y_batch = batch
+                x_batch = x_batch.to(device)
+                y_hat = model(x_batch)
+                dev_loss_acc += criterion(y_hat, y_batch.to(device)).item()
+                dev_examples += x_batch.size(0)
+                dev_accuracy += metric(torch.argmax(y_hat, -1), y_batch)
+        
+        if liveplot is not None:
+            liveplot.tick() # Update the liveplot time
+            liveplot.report("Training loss", training_loss_acc / training_examples)
+            liveplot.report("Development loss", dev_loss_acc / dev_examples)
+            liveplot.report("Development accuracy", dev_accuracy / (i+1), secondary_y=True)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region editable=true slideshow={"slide_type": "slide"} -->
+Then, we make the model into a `torch.nn.Module` class:
+<!-- #endregion -->
+
+```python editable=true slideshow={"slide_type": ""}
+class MLP(torch.nn.Module):
+    def __init__(self, input_dim, output_dim, hidden_dim):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, output_dim),
+        )
+    def forward(self, x):
+        y_hat = self.layers(x)
+        return y_hat
+```
+
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Let's visualize our training curves
 
 * Plots loss and accuracy for train and validation sets separately
 * The model didn't learn anything, which makes sense (data is random)
 <!-- #endregion -->
 
-```python
-plot_loss_acc(history)
+```python editable=true slideshow={"slide_type": ""}
+# Setup plot
+liveplot = LivePlot()
+
+# model from MLP class
+model = MLP(input_dim=3, output_dim=2, hidden_dim=3)
+
+learning_rate = 1e-3
+weight_decay = 1e-5
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+criterion = nn.CrossEntropyLoss()
+epochs = 20
+liveplot.increment(20)
+train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=epochs, liveplot=liveplot)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Do it again, but with data that actually means something
 
 * A XOR function is not linear
 * A perceptron is not able to separate XOR classes
 * A MLP should be able to
 
-<img src="figures/3-IP-TRUTH-TABLE2.jpg">
+<img src="figures/xor_table.jpg">
 
 <!-- #endregion -->
 
-<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
 Let's generate data that is not just binary, but behaves like it:
 
 * A positive (+) input behaves like a 1
@@ -634,23 +881,25 @@ Let's generate data that is not just binary, but behaves like it:
 * -0.5 $\oplus$ 0.2 $\oplus$ -0.1 => 1
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python slideshow={"slide_type": "-"} editable=true
 # Generate XOR data
-data = np.random.random((1000000, 3)) - 0.5
-labels = np.zeros((1000000, 1))
+xor_data = np.random.random((10000, 3)) - 0.5
+xor_labels = np.zeros((10000))
 
-labels[np.where(np.logical_xor(np.logical_xor(data[:,0] > 0, data[:,1] > 0), data[:,2] > 0))] = 1
+xor_labels[np.where(np.logical_xor(np.logical_xor(xor_data[:,0] > 0, xor_data[:,1] > 0), xor_data[:,2] > 0))] = 1
 
 #let's print some data and the corresponding label to check that they match the table above
 for x in range(3):
-    print("{0: .2f} xor {1: .2f} xor {2: .2f} equals {3:}".format(data[x,0], data[x,1], data[x,2], labels[x,0]))
+    print("{0: .2f} xor {1: .2f} xor {2: .2f} equals {3:}".format(xor_data[x,0], xor_data[x,1], xor_data[x,2], xor_labels[x]))
 ```
 
-```python slideshow={"slide_type": "skip"}
+```python slideshow={"slide_type": "skip"} editable=true
 from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 pca = PCA(n_components=2)
-transformed = pca.fit_transform(data)
-plt.scatter(transformed[:,0], transformed[:,1], c=labels)
+transformed = pca.fit_transform(xor_data)
+plt.scatter(transformed[:,0], transformed[:,1], c=xor_labels)
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} -->
@@ -658,29 +907,30 @@ Now let's fit a model to the data:
 <!-- #endregion -->
 
 ```python slideshow={"slide_type": "-"}
-from keras.layers import LeakyReLU, Dropout
-model = Sequential()
-model.add(Dense(16, input_dim=3, activation="tanh"))
-model.add(Dense(8, activation="tanh"))
-model.add(Dense(4, activation="tanh"))
-model.add(Dense(2, activation='softmax'))
+dataset = TensorDataset(torch.tensor(xor_data, dtype=torch.float32), 
+                        torch.tensor(xor_labels, dtype=torch.long))
+percentage_dev = 0.1
+n_dev_samples = int(len(dataset)*0.1)
+# split the data randomly
+train_set, dev_set = torch.utils.data.random_split(dataset, [len(dataset)-n_dev_samples, n_dev_samples])
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-# Train the model, iterating on the data in batches of 32 samples
-history = model.fit(data, labels, epochs=2, batch_size=128, validation_split=0.1, shuffle=True)
-```
+# shuffle data at training time
+train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
+dev_loader = DataLoader(dev_set, batch_size=32)
 
-```python
-from keras.layers import LeakyReLU, Dropout
-model = Sequential()
-model.add(Dense(16, input_dim=3, activation="tanh"))
-model.add(Dense(8, activation="tanh"))
-model.add(Dense(4, activation="tanh"))
-model.add(Dense(2, activation='softmax'))
+# Setup plot
+liveplot = LivePlot()
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-# Train the model, iterating on the data in batches of 32 samples
-history = model.fit(data, labels, epochs=100, batch_size=128, validation_split=0.1, shuffle=True)
+# model from MLP class
+model = MLP(input_dim=3, output_dim=2, hidden_dim=3)
+
+learning_rate = 1e-3
+weight_decay = 1e-5
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+criterion = nn.CrossEntropyLoss()
+max_epochs = 20
+liveplot.increment(max_epochs)
+train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=max_epochs, liveplot=liveplot)
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} -->
@@ -690,23 +940,37 @@ history = model.fit(data, labels, epochs=100, batch_size=128, validation_split=0
 * Notice the difference between train and validation curves
 <!-- #endregion -->
 
-```python
-plot_loss_acc(history)
-```
-
 <!-- #region slideshow={"slide_type": "slide"} -->
 ## Exercise: can you do better?
 
 * Check the exercise notebook!
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "slide"}
-model = Sequential()
-model.add(Dense(4, input_dim=3, activation='sigmoid'))
-model.add(Dense(3, activation='sigmoid'))
-model.add(Dense(2, activation='softmax'))
+```python
+class MLP(torch.nn.Module):
+    def __init__(self, input_dim, output_dim, hidden_dim):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, output_dim),
+        )
+    def forward(self, x):
+        y_hat = self.layers(x)
+        return y_hat
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-# Train the model, iterating on the data in batches of 32 samples
-history = model.fit(data, labels, epochs=10, batch_size=32, validation_split=0.1)
+# Setup plot
+liveplot = LivePlot()
+
+# model from MLP class
+model = MLP(input_dim=3, output_dim=2, hidden_dim=16)
+
+learning_rate = 1e-3
+weight_decay = 1e-5
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+criterion = nn.CrossEntropyLoss()
+
+max_epochs = 20
+liveplot.increment(max_epochs)
+train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=max_epochs, liveplot=liveplot)
 ```
