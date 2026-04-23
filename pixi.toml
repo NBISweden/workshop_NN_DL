@@ -2,13 +2,12 @@
 authors = ["clami66 <claudio.mirabello@scilifelab.se>"]
 channels = ["conda-forge"]
 name = "workshop_nn_dl"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
 
 [dependencies]
 python = ">=3.12.0,<3.13"
 curl = ">=8.19.0,<9"
-git = ">=2.53.0,<3"
 pip = ">=26.0.1,<27"
 
 [pypi-dependencies]
@@ -18,6 +17,9 @@ matplotlib = ">=3.10.8, <4"
 # Default (CPU / generic) torch — used by teachers and basics environments
 [feature.torch.pypi-dependencies]
 torch = ">=2.10.0, <3"
+
+[feature.rocm]
+platforms = ["linux-64"]
 
 # ROCm torch — install from the AMD ROCm PyPI index (for local AMD GPU use)
 [feature.rocm.pypi-options]
@@ -73,7 +75,11 @@ r-pdftools = ">=3.7.0,<4"
 r-devtools = ">=2.5.0,<3"
 
 [environments]
+default = ["torch", "pythonlibs"]
 teachers = ["torch", "quarto", "pythonlibs"]
 basics = ["torch", "rise-jupyter"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
 rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
+
+[tasks]
+test = "python -c 'import torch; print(torch.cuda.is_available())'"
