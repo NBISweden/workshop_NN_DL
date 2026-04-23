@@ -45,15 +45,15 @@ scikit-learn = ">=1.8.0, <2"
 numpy = ">=2.4.3, <3"
 jupyterquiz = ">=2.9.6.4, <3"
 pyyaml = "*"
-tqdm = ">=4.67.3, <5"
+tqdm = "< 5"
 jupyter-cache = ">=1.0.1, <2"
 pillow = "*"
 scipy = "*"
 scikit-image = "*"
-
-[feature.pythonlibs.dependencies]
 seaborn = ">=0.13.2,<0.14"
 umap-learn = ">=0.5.12,<0.6"
+
+[feature.pythonlibs.dependencies]
 plotly = ">=6.6.0,<7"
 anywidget = ">=0.10.0,<0.11"
 
