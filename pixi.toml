@@ -2,13 +2,12 @@
 authors = ["clami66 <claudio.mirabello@scilifelab.se>"]
 channels = ["conda-forge"]
 name = "workshop_nn_dl"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
 
 [dependencies]
 python = ">=3.12.0,<3.13"
 curl = ">=8.19.0,<9"
-git = ">=2.53.0,<3"
 pip = ">=26.0.1,<27"
 
 [pypi-dependencies]
@@ -19,13 +18,19 @@ matplotlib = ">=3.10.8, <4"
 [feature.torch.pypi-dependencies]
 torch = ">=2.10.0, <3"
 
+[feature.rocm]
+platforms = ["linux-64"]
+
 # ROCm torch — install from the AMD ROCm PyPI index (for local AMD GPU use)
 [feature.rocm.pypi-options]
-extra-index-urls = ["https://download.pytorch.org/whl/rocm6.2"]
+extra-index-urls = ["https://download.pytorch.org/whl/rocm7.2"]
+
+[feature.rocm.dependencies]
+setuptools = "<82"
 
 [feature.rocm.pypi-dependencies]
-torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm6.2" }
-torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm6.2" }
+torch = { version = ">=2.5.0, <3", index = "https://download.pytorch.org/whl/rocm7.2" }
+torchvision = { version = ">=0.20.0, <1", index = "https://download.pytorch.org/whl/rocm7.2" }
 
 [feature.rise-jupyter.pypi-dependencies]
 jupyterlab_rise = "*"
@@ -42,6 +47,15 @@ jupyterquiz = ">=2.9.6.4, <3"
 pyyaml = "*"
 tqdm = ">=4.67.3, <5"
 jupyter-cache = ">=1.0.1, <2"
+pillow = "*"
+scipy = "*"
+scikit-image = "*"
+
+[feature.pythonlibs.dependencies]
+seaborn = ">=0.13.2,<0.14"
+umap-learn = ">=0.5.12,<0.6"
+plotly = ">=6.6.0,<7"
+anywidget = ">=0.10.0,<0.11"
 
 [feature.torchvision.pypi-dependencies]
 torchvision = "*"
@@ -61,7 +75,11 @@ r-pdftools = ">=3.7.0,<4"
 r-devtools = ">=2.5.0,<3"
 
 [environments]
-teachers = ["torch"]
+default = ["torch", "pythonlibs"]
+teachers = ["torch", "quarto", "pythonlibs"]
 basics = ["torch", "rise-jupyter"]
-local-amd = ["rocm", "rise-jupyter", "quarto"]
+local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
 rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
+
+[tasks]
+test = "python -c 'import torch; print(torch.cuda.is_available())'"
