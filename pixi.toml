@@ -13,10 +13,13 @@ pip = ">=26.0.1,<27"
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"
 matplotlib = ">=3.10.8, <4"
+segmentation-models-pytorch = "*"
 
 # Default (CPU / generic) torch — used by teachers and basics environments
 [feature.torch.pypi-dependencies]
 torch = ">=2.10.0, <3"
+torchvision = "*"
+torchmetrics = "*"
 
 [feature.rocm]
 platforms = ["linux-64"]
@@ -52,13 +55,11 @@ scipy = "*"
 scikit-image = "*"
 seaborn = ">=0.13.2,<0.14"
 umap-learn = ">=0.5.12,<0.6"
+segmentation-models-pytorch = "*"
 
 [feature.pythonlibs.dependencies]
 plotly = ">=6.6.0,<7"
 anywidget = ">=0.10.0,<0.11"
-
-[feature.torchvision.pypi-dependencies]
-torchvision = "*"
 
 [feature.rlibs.dependencies]
 r-base = "*"
@@ -78,8 +79,10 @@ r-devtools = ">=2.5.0,<3"
 default = ["torch", "pythonlibs"]
 teachers = ["torch", "quarto", "pythonlibs"]
 basics = ["torch", "rise-jupyter"]
-local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
-rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
+local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
+rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "rlibs"]
 
 [tasks]
 test = "python -c 'import torch; print(torch.cuda.is_available())'"
+jupyter-lab = "jupyter lab --no-browser"
+ 
