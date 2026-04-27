@@ -50,14 +50,26 @@ Of course, a neural network will not accept a string input as it is, so we will 
 [Click on this link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/main/good_practices/labs/data_splits/rigorous_train_validation_splitting.ipynb)
 <!-- #endregion -->
 
+```python editable=true slideshow={"slide_type": ""}
+#from google.colab import output
+#output.enable_custom_widget_manager()
+```
+
+```python editable=true slideshow={"slide_type": ""}
+#!pip install torchmetrics
+```
+
+<!-- #region editable=true slideshow={"slide_type": ""} -->
 ## Data download
 
 First, let's setup the colab environment, download dataset and other relevant data:
+<!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
 !mkdir -p data
 !wget -v -O data/dataset_sseq_singleseq.pic -L https://zenodo.org/records/19821394/files/dataset_sseq_singleseq.pic?download=1
 !wget -v -O data/trainset_distance_matrix.tsv -L https://zenodo.org/records/19821394/files/trainset_distance_matrix.tsv?download=1
+!wget -O data/train_set -L https://github.com/NBISweden/workshop_NN_DL/raw/refs/heads/basics/good_practices/labs/data_splits/data/train_set
 ```
 
 Now let's load libraries and plotting functions:
@@ -154,26 +166,28 @@ def train(*,
             training_loss_acc += loss.item()
             training_examples += x_batch.size(0)
         
-        model.eval()
-        with torch.no_grad():
-            dev_loss_acc = 0
-            dev_examples = 0
-            dev_accuracy = 0
-            for i, batch in enumerate(dev_loader):
-                x_batch, y_batch = batch
-                x_batch = x_batch.to(device)
-                y_hat = model(x_batch)
-                dev_loss_acc += criterion(y_hat, y_batch.to(device)).item()
-                dev_examples += x_batch.size(0)
-                if metric:
-                    dev_accuracy += metric(torch.argmax(y_hat, -1), y_batch)
         
-        if liveplot is not None:
-            liveplot.tick() # Update the liveplot time
-            liveplot.report("Training loss", training_loss_acc / training_examples)
-            liveplot.report("Development loss", dev_loss_acc / dev_examples)
-            if metric:
-                liveplot.report("Development accuracy", dev_accuracy / (i+1), secondary_y=True)
+            if i % 100 == 0:
+                model.eval()
+                with torch.no_grad():
+                    dev_loss_acc = 0
+                    dev_examples = 0
+                    dev_accuracy = 0
+                    for i, batch in enumerate(dev_loader):
+                        x_batch, y_batch = batch
+                        x_batch = x_batch.to(device)
+                        y_hat = model(x_batch)
+                        dev_loss_acc += criterion(y_hat, y_batch.to(device)).item()
+                        dev_examples += x_batch.size(0)
+                        if metric:
+                            dev_accuracy += metric(torch.argmax(y_hat, -1), y_batch.to(device))
+                
+                if liveplot is not None:
+                    liveplot.tick() # Update the liveplot time
+                    liveplot.report("Training loss", training_loss_acc / training_examples)
+                    liveplot.report("Development loss", dev_loss_acc / dev_examples)
+                    if metric:
+                        liveplot.report("Development accuracy", dev_accuracy / (i+1), secondary_y=True)
 ```
 
 <!-- #region editable=true slideshow={"slide_type": ""} -->
