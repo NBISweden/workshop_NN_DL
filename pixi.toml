@@ -75,6 +75,6 @@ r-devtools = ">=2.5.0,<3"
 
 [environments]
 teachers = ["torch", "quarto", "pythonlibs"]
-basics = ["torch", "rise-jupyter", "quarto"]
+basics = ["torch", "rise-jupyter", "quarto", "pythonlibs"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
 rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
