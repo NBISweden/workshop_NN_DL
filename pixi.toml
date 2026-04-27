@@ -2,23 +2,27 @@
 authors = ["clami66 <claudio.mirabello@scilifelab.se>"]
 channels = ["conda-forge"]
 name = "workshop_nn_dl"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
 
 [dependencies]
 python = ">=3.12.0,<3.13"
 curl = ">=8.19.0,<9"
-git = ">=2.53.0,<3"
 pip = ">=26.0.1,<27"
 
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"
 matplotlib = ">=3.10.8, <4"
+segmentation-models-pytorch = "*"
 
 # Default (CPU / generic) torch — used by teachers and basics environments
 [feature.torch.pypi-dependencies]
 torch = ">=2.10.0, <3"
-torchmetrics = ">=1.9.0, <2"
+torchvision = "*"
+torchmetrics = "*"
+
+[feature.rocm]
+platforms = ["linux-64"]
 
 # ROCm torch — install from the AMD ROCm PyPI index (for local AMD GPU use)
 [feature.rocm.pypi-options]
@@ -44,20 +48,18 @@ scikit-learn = ">=1.8.0, <2"
 numpy = ">=2.4.3, <3"
 jupyterquiz = ">=2.9.6.4, <3"
 pyyaml = "*"
-tqdm = ">=4.67.3, <5"
+tqdm = "< 5"
 jupyter-cache = ">=1.0.1, <2"
 pillow = "*"
 scipy = "*"
 scikit-image = "*"
-
-[feature.pythonlibs.dependencies]
 seaborn = ">=0.13.2,<0.14"
 umap-learn = ">=0.5.12,<0.6"
+segmentation-models-pytorch = "*"
+
+[feature.pythonlibs.dependencies]
 plotly = ">=6.6.0,<7"
 anywidget = ">=0.10.0,<0.11"
-
-[feature.torchvision.pypi-dependencies]
-torchvision = "*"
 
 [feature.rlibs.dependencies]
 r-base = "*"
@@ -74,7 +76,12 @@ r-pdftools = ">=3.7.0,<4"
 r-devtools = ">=2.5.0,<3"
 
 [environments]
+default = ["torch", "pythonlibs"]
 teachers = ["torch", "quarto", "pythonlibs"]
 basics = ["torch", "rise-jupyter", "quarto", "pythonlibs"]
-local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs", "torchvision"]
-rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "torchvision", "rlibs"]
+local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
+rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "rlibs"]
+
+[tasks]
+test = "python -c 'import torch; print(torch.cuda.is_available())'"
+jupyter-lab = "jupyter lab --no-browser"
