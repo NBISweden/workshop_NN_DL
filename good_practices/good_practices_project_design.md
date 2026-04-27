@@ -428,16 +428,3 @@ def train(data_loader):
 <img src="figures/transferlearning.png"></img>
 [(img source)](https://www.slideshare.net/xavigiro/transfer-learning-d2l4-insightdcu-machine-learning-workshop-2017)
 <!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "skip"} editable=true -->
-## Lab 3: transfer learning in imaging data (~1 h.)
-
-Jupyter notebook: 
-
-session_goodPracticesDatasetDesign/lab_transferLearning/transfer_learning.ipynb
-
-* Christophe's lab on cell classification:
-    * We want to train a larger network
-    * Use a network pre-trained on completely different data
-    * Is it going to help?
-<!-- #endregion -->

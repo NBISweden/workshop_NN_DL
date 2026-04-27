@@ -57,7 +57,7 @@ Plotting and training helper functions:
 torchmetrics.Accuracy
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 from typing import Optional
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -168,7 +168,7 @@ def train(*,
 
 Data generation step:
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 import numpy as np
 # Generate XOR data
 data = np.random.random((10000, 3)) - 0.5
@@ -184,7 +184,7 @@ for x in range(3):
 
 The baseline network to improve:
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -339,7 +339,7 @@ https://keras.io/api/datasets/imdb/
 
 Load the dataset, set a couple of important parameters (max_features, maxlen). Also pad all reviews with less than 200 words so that they have all the same length.
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # import datasets
 from torchtext.datasets import IMDB
 
