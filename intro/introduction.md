@@ -145,8 +145,9 @@ table p {
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
 # More practical info
 
-* Lunches
+* Attendance sheet
 * Dinner, Wednesday 8pm (Stångs Magasin)
+* Lunches (12:30)
 * Coffee (10:30, 15:00)
 * Questions?
 <!-- #endregion -->
