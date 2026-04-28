@@ -29,11 +29,6 @@ jobs:
         run: |
           pixi run -e teachers quarto add --no-prompt percyfal/nbis-quarto-revealjs
 
-      - name: Install TeXLive
-        run: |
-          sudo apt-get update
-          sudo apt-get install texlive texlive-latex-extra
-
       - run: echo "TEXINPUTS=$TEXINPUTS:$GITHUB_WORKSPACE/rnn" >> $GITHUB_ENV
 
       - name: Render Quarto pages
