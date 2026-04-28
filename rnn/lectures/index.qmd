@@ -266,6 +266,67 @@ Make mental image: from now on inputs are **vectors**
 
 ::::
 
+
+## Feed forward network
+
+:::{}
+
+```{r}
+#| label: tikz-rnn-recap-perceptron-multiout-group
+#| engine: tikz
+#| out-height: 500px
+\begin{tikzpicture}
+  \tikzset{
+    iolabel/.append style={rotate=0},
+    nncon/.append style={->},
+  }
+  \rnntikzset{
+    dotted=true
+  }
+  \pic (i_) {nnlayer={5}{input}{X}{m}{}};
+  \pic[xshift=2*\basenodesep, \rnntikzbasekey/boxed=true] (h1_) {nnlayer={3}{hidden}{}{}{green}};
+  \pic[xshift=5*\basenodesep, \rnntikzbasekey/boxed=true] (h_) {nnlayer={3}{hidden}{}{}{green}};
+  \pic[xshift=7*\basenodesep] (o_) {nnlayer={3}{output}{\widehat{Y}}{n}{}};
+  \pic {connectlayers={i_}{h1_}{5}{3}};
+  \pic {connectlayers={h1_}{h_}{3}{3}};
+  \pic {connectlayers={h_}{o_}{3}{3}};
+
+  \node[xshift=3.5*\basenodesep, yshift=-2.5*\basenodesep] {$\dots$};
+  \node[xshift=2*\basenodesep, yshift=2*\basenodesep] {$1$};
+  \node[xshift=5*\basenodesep, yshift=2*\basenodesep] {$k$};
+
+  \node[yshift=-4*\basenodesep] {$\mathbf{X} \in \mathbb{R}^m$};
+\node[xshift=7*\basenodesep, yshift=-4*\basenodesep] {$\mathbf{Y} \in \mathbb{R}^n$};
+
+
+\begin{scope}[xshift=0*\basenodesep, yshift=-5 * \basenodesep/2]
+\draw[rounded corners, draw=blue!80, fill=blue!20, opacity=0.8] (-\basenodesep/2, -\basenodesep) rectangle (\basenodesep/2, 10*\basenodesep/2);
+\end{scope}
+
+\begin{scope}[xshift=3*\basenodesep / 2, yshift=-1.75 * \basenodesep]
+\draw[rounded corners, draw=green!80, fill=green!20, opacity=0.8] (-\basenodesep/2, -\basenodesep) rectangle (9 * \basenodesep/2, 7*\basenodesep/2);
+\end{scope}
+
+\begin{scope}[xshift=7 * \basenodesep, yshift=-1.75 * \basenodesep]
+\draw[rounded corners, draw=red!80, fill=red!20, opacity=0.8] (-\basenodesep/2, -\basenodesep) rectangle (\basenodesep/2, 7*\basenodesep/2);
+\end{scope}
+
+\end{tikzpicture}
+```
+
+:::
+
+:::: {.notes}
+
+Segue: typically want multiple layers between input and output
+
+Multi-valued (vector) output and hidden layer.
+
+Make mental image: from now on inputs are **vectors**
+
+::::
+
+
 ## Simplified illustration
 
 :::{}
@@ -1351,7 +1412,7 @@ $$
 
 :::: {.fragment .center}
 
-Note that the same function and weights are used across all time
+Note that the **same function and weights** are used across all time
 steps!
 
 ::::
@@ -1703,26 +1764,32 @@ Sharing parameters:
 
 ## Box & Jenkins airline passenger data set
 
-::: {}
+:::: {.columns}
+
+::: {.column width="30%"}
 
 ```{python }
 #| echo: true
 import pandas as pd
-df = pd.read_csv('airline-passengers.csv', names=['time','passengers'], header=0)
-df['time'] = pd.to_datetime(df['time'], format='%Y-%m')
-df.head()
+df = pd.read_csv(
+    'airline-passengers.csv',
+    names=['time','passengers'],
+    header=0
+)
+df['time'] = pd.to_datetime(
+    df['time'], format='%Y-%m'
+)
+df.head(12)
 ```
 
 :::
 
-:::{}
-
-:::{style="transform: translate(30px, -150px);"}
+::: {.column width="70%"}
 
 ```{python }
-#| out-height: 400px
-#| fig-width: 14
-#| fig-height: 7
+#| out-width: 100%
+#| fig-width: 12
+#| fig-height: 6
 import pandas as pd
 df = pd.read_table("airline-passengers.csv", sep=",")
 df.plot(x="Month", y="Passengers")
@@ -1732,7 +1799,7 @@ df.plot(x="Month", y="Passengers")
 
 :::
 
-:::
+::::
 
 :::: {.notes}
 
@@ -1928,7 +1995,7 @@ On RNN layers and time steps (<https://keras.io/guides/working_with_rnns/>):
 ::: {.column width="50%"}
 
 Define training and test loops that iterate dataloaders. The training
-loop updates model parameters by back propagation and the use of an
+loop updates model parameters by backpropagation and the use of an
 optimizer. The test loop evaluates model on an independent dataset.
 
 ```{python }
@@ -2298,7 +2365,8 @@ What is the topology of the network?
 
 :::: {.fragment .center}
 
-4 input units (features), 4 time steps, 3 hidden units, 4 output units
+4 input units `h`, `e`, `l`, `o` (features), 4 time steps, 3 hidden
+units, 4 output units
 
 ::::
 
@@ -2521,7 +2589,7 @@ general and applies also to ffns.
 2. calculate prediction error $\epsilon_i$ wrt (known) output:
    $\epsilon_i = \mathcal{L}(\hat{y}_i, y_i)$, loss function
    $\mathcal{L}$
-3. back propagate errors and update weights to minimize loss
+3. backpropagate errors and update weights to minimize loss
 
 ::::
 
@@ -3936,7 +4004,7 @@ parallelization allows training on larger datasets
 
 1. Sequential data can be modelled with **RNNs**
 2. **Recurrence** to model sequences
-3. Training with **back-propagation through time**
+3. Training with **backpropagation through time**
 4. Gated units (**LSTM**, **GRU**) partially solve the vanishing
    gradient problem
 5. **Transformers** model sequences **without** recurrence and have
