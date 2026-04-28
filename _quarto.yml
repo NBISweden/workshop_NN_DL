@@ -5,6 +5,8 @@ project:
 
 institute: NBIS
 format:
+  html:
+    format-links: false
   nbis-quarto-revealjs:
     theme:
       - default
