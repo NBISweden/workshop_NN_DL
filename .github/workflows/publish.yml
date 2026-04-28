@@ -38,7 +38,8 @@ jobs:
 
       - name: Render Quarto pages
         run: |
-          pixi run -e teachers quarto render
+          pixi run -e teachers quarto render --to html
+          pixi run -e teachers quarto render --to ipynb --no-clean
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
