@@ -7,7 +7,7 @@ format:
       - "assets/custom.scss"
     text-align: left
     center: false
-
+session: RNN
 knitr:
   opts_chunk:
     code-fold: false

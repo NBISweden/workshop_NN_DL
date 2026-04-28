@@ -15,9 +15,12 @@ jupyter:
 format:
   html:
     code-fold: true
+  ipynb:
+    execute: false
 description: Alphabet lab
 execute:
   eval: true
+notebook-url: "[alphabet.ipynb](../rnn/labs/alphabet.ipynb)"  
 ---
 
 ```{python}

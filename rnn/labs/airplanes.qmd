@@ -15,9 +15,12 @@ jupyter:
 format:
   html:
     code-fold: true
+  ipynb:
+    execute: false
 description: Airplanes lab
 execute:
   eval: true
+notebook-url: "[airplanes.ipynb](../rnn/labs/airplanes.ipynb)"
 ---
 
 ```{python }

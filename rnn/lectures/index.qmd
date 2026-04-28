@@ -5,6 +5,7 @@ author:
 format:
   nbis-quarto-revealjs:
     footer: "Recurrent neural networks"
+description: Introduction to recurrent neural networks
 ---
 
 # Setup  {visibility="hidden" .unnumbered .unlisted}

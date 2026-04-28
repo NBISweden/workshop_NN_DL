@@ -3,6 +3,7 @@ project:
   type: website
   output-dir: _site
   render:
+    - docs/index.qmd
     - rnn/lectures/index.qmd
     - rnn/labs/alphabet.qmd
     - rnn/labs/airplanes.qmd
