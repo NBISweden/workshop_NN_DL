@@ -26,7 +26,7 @@ jobs:
 
       - name: Install Quarto extensions
         run: |
-          pixi run -e teachers quarto add --no-prompt percyfal/nbis-course-quarto
+          pixi run -e teachers quarto add --no-prompt percyfal/nbis-quarto-revealjs
 
       - name: Render Quarto pages
         run: |
