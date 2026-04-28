@@ -80,7 +80,7 @@ default = ["torch", "pythonlibs"]
 teachers = ["torch", "quarto", "pythonlibs", "rlibs"]
 basics = ["torch", "rise-jupyter"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
-rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "rlibs"]
+rnn = ["quarto", "pythonlibs", "torch", "rlibs"]
 
 [tasks]
 test = "python -c 'import torch; print(torch.cuda.is_available())'"
