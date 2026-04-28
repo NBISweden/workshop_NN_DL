@@ -27,6 +27,10 @@ jobs:
         with:
           environments: teachers
 
+      - name: Install Quarto extensions
+        run: |
+          pixi run -e teachers quarto add --no-prompt percyfal/nbis-course-quarto
+
       - name: Render Quarto pages
         run: |
           pixi run -e teachers quarto render
