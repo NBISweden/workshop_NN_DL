@@ -11,7 +11,7 @@ listing:
       session: "Session"
     sort: false
     contents:
-      - ../rnn/lectures/index.qmd
+      - rnn/lectures/index.qmd
   - id: lab-listings
     type: table
     grid-columns: 4
@@ -24,8 +24,8 @@ listing:
       - title
       - notebook-url
     contents:
-      - ../rnn/labs/airplanes.qmd
-      - ../rnn/labs/alphabet.qmd
+      - rnn/labs/airplanes.qmd
+      - rnn/labs/alphabet.qmd
 date: ""
 toc: false
 sidebar: true
@@ -38,8 +38,8 @@ format:
 ### A note on usage
 
 Html slides have been authored using [revealjs](https://revealjs.com/)
-and can be viewed directly in the browser. In some cases, there are
-accompanying speaker notes that can be viewed by pressing `s`.
+and can be viewed directly in the browser. Press `s` to view speaker
+notes.
 
 ### Slides
 

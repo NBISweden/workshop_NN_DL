@@ -1,0 +1,6 @@
+# -*- yaml -*-
+# Render Jupyter notebooks
+project:
+  render:
+    - rnn/labs/alphabet.qmd
+    - rnn/labs/airplanes.qmd
