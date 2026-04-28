@@ -80,25 +80,37 @@ class PCAScene(Scene):
         pc1, pc2 = vecs[:, 0], vecs[:, 1]
         X_rot    = X @ vecs                        # data in PC coordinates
 
-        # ── Reference axes ────────────────────────────────────────────────────
-        carteesian_axes_arr = np.array([[[-5., 0.], [5.,0.]],
-                                        [[0., -4.], [0., 4.]]])
-        
-        carteesian_axes = VGroup(
-            Line(sp(*carteesian_axes_arr[0,0]), sp(*carteesian_axes_arr[0, 1]), color=_AX, stroke_width=1.5),
-            Line(sp(*carteesian_axes_arr[1,0]), sp(*carteesian_axes_arr[1, 1]), color=_AX, stroke_width=1.5),
-        )
+        # ── Grid helper ───────────────────────────────────────────────────────
+        def _build_grid(tfn):
+            """Return a VGroup of grid lines; each point mapped through tfn(x,y)."""
+            lines = []
+            for xi in range(-4, 5):
+                w, op = (1.8, 0.75) if xi == 0 else (0.8, 0.38)
+                lines.append(Line(tfn(xi, -4.), tfn(xi, 4.),
+                                  color=_AX, stroke_width=w, stroke_opacity=op))
+            for yi in range(-4, 5):
+                w, op = (1.8, 0.75) if yi == 0 else (0.8, 0.38)
+                lines.append(Line(tfn(-5., yi), tfn(5., yi),
+                                  color=_AX, stroke_width=w, stroke_opacity=op))
+            return VGroup(*lines)
 
+        # Original (Cartesian) grid
+        orig_grid = _build_grid(sp)
+
+        # Rotated grid: same grid lines but endpoints projected through vecs
+        def sp_rot(x, y):
+            p = np.array([x, y], dtype=float) @ vecs
+            return sp(p[0], p[1])
+
+        rotated_grid = _build_grid(sp_rot)
+
+        # PC-aligned grid (axis-aligned, fades in after rotation)
+        pc_grid = _build_grid(sp)
+
+        # Keep the axis-endpoint array for label position math below
+        carteesian_axes_arr    = np.array([[[-5., 0.], [5., 0.]],
+                                           [[ 0., -4.], [0., 4.]]])
         tgt_carteesian_axes_arr = carteesian_axes_arr @ vecs
-        tgt_carteesian_axes = VGroup(
-            Line(sp(*tgt_carteesian_axes_arr[0,0]), sp(*tgt_carteesian_axes_arr[0, 1]), color=_AX, stroke_width=1.5),
-            Line(sp(*tgt_carteesian_axes_arr[1,0]), sp(*tgt_carteesian_axes_arr[1, 1]), color=_AX, stroke_width=1.5),
-        )
-        
-        pc_axes = VGroup(
-            Line(sp(-5, 0), sp(5, 0), color=_AX, stroke_width=1.5),
-            Line(sp(0, -4), sp(0, 4), color=_AX, stroke_width=1.5),
-        )
         ax_lbl_x = Tex("$x_1$", font_size=24, color=GREY_D).move_to(sp(4.7, 0.35))
         ax_lbl_y = Tex("$x_2$", font_size=24, color=GREY_D).move_to(sp(0.35, 3.8))
 
@@ -111,7 +123,7 @@ class PCAScene(Scene):
         # ── Phase 1: show scatter ─────────────────────────────────────────────
         title = Tex("2D data with covariance", font_size=38, color=WHITE
                      ).to_edge(UP, buff=0.30)
-        self.play(FadeIn(carteesian_axes), FadeIn(ax_lbl_x), FadeIn(ax_lbl_y),
+        self.play(FadeIn(orig_grid), FadeIn(ax_lbl_x), FadeIn(ax_lbl_y),
                   Write(title), run_time=0.8)
         self.play(FadeIn(dots), run_time=1.0)
         self.wait(1.2)
@@ -188,7 +200,7 @@ class PCAScene(Scene):
         _PC_FADE   = 0.5   # PC axes/labels fade-in duration
 
         self.play(
-            # ── Dots + arrows + title: full rotation ──────────────────────────
+            # ── Dots + arrows + original grid: all rotate together ─────────────
             AnimationGroup(
                 *[dot.animate.move_to(sp(xr, yr)) for dot, (xr, yr) in zip(dots, X_rot)],
                 Transform(arr1,    tgt_arr1),
@@ -197,27 +209,23 @@ class PCAScene(Scene):
                 Transform(lbl_pc2, tgt_lbl2),
                 ReplacementTransform(new_t1, new_t2),
                 FadeOut(pc_banner),
-                Transform(carteesian_axes, tgt_carteesian_axes),
+                Transform(orig_grid, rotated_grid),
                 Transform(ax_lbl_x, tgt_ax_lbl_x_rot),
                 Transform(ax_lbl_y, tgt_ax_lbl_y_rot),
                 run_time=_ROT_T,
                 rate_func=smooth,
             ),
-            # ── Cartesian axes + labels: rotate briefly, then fade out ─────────
-            
-           
-        
-            # ── PC coordinate system: fade in near the end ────────────────────
+            # ── Old grid fades out; PC-aligned grid fades in ──────────────────
             Succession(
                 Wait(_PC_DELAY),
-                 AnimationGroup(
-                FadeOut(carteesian_axes),
-                FadeOut(ax_lbl_x),
-                FadeOut(ax_lbl_y),
-                run_time=_CART_FADE,
-            ),
                 AnimationGroup(
-                    FadeIn(pc_axes),
+                    FadeOut(orig_grid),
+                    FadeOut(ax_lbl_x),
+                    FadeOut(ax_lbl_y),
+                    run_time=_CART_FADE,
+                ),
+                AnimationGroup(
+                    FadeIn(pc_grid),
                     FadeIn(pc_ax_lbl_x),
                     FadeIn(pc_ax_lbl_y),
                     run_time=_PC_FADE,

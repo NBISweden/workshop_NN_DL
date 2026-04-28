@@ -1,9 +1,13 @@
 ---
-title: "Self-Supervised Learning"
-subtitle: "No labels - no worries!"
-author: "Erik Ylipää"
+title: "Contrastive learning"
+author: "Erik Ylipää (erik.ylipaa@liu.se)"
 date: today
 format:
+  # nbis-quarto-revealjs:
+  #   slide-number: true
+  #   incremental: false
+  #   code-line-numbers: true
+  #   highlight-style: github
   revealjs:
     theme: default
     slide-number: true
@@ -18,77 +22,16 @@ jupyter: python3
 
 ## Overview
 
-- Supervised vs. unsupervised learning
-  - Supervised: learn from labeled data
-  - Unsupervised: learn from unlabeled data
-- Representation learning: the heart of deep learning
-- Self-supervised learning: a middle ground
-  - Create labels from the data itself
-  - Learn useful representations without manual annotation
-- Autoencoders: The foundation of self-supervised learning
-  - Encoder-decoder architecture
+- Representation learning
+- Breaking down classification
+- Contrastive learning
+- Self-supervised learning
+- Multimodal learning
 
 ::: {.notes}
 Welcome everyone. Today we cover self-supervised learning, a middle-ground between supervised and unsupervised learning. The key idea is to create labels from the data itself, allowing us to learn useful representations without manual annotation. Before we dive into this concept, we'll first review some fundamentals of learning paradigms and representation learning. Then, we'll explore autoencoders, which are a foundational architecture in self-supervised learning.
 :::
 
-## Supervised vs. Unsupervised Learning
-
-| Paradigm | Data | Objective |
-|---|---|---|
-| Supervised | Labeled (x, y) | Learn mapping x → y |
-| Unsupervised | Unlabeled x | Learn structure in data |
-
-```{python}
-#| echo: false
-#| eval: true
-from viz.supervised_vs_unsupervised import supervised_vs_unsupervised
-supervised_vs_unsupervised()
-```
-
-## The power of supervised learning {.smaller}
-
-:::: {.columns}
-
-::: {.column width="50%"}
-Most problems we want to solve are supervised. We often want to predict things based on an input. For example:
-
- - Given an image, predict what it contains (classification)
- - Given a sentence in English, translate it to French (translation)
- - Given an email, predict whether it's spam (classification)
-
-:::
-
-::: {.column width="50%"}
-
-```{python}
-#| echo: false
-#| eval: true
-from viz.supervised_vs_unsupervised import supervised
-supervised()
-```
-
-:::
-
-::::
-
-::: {.notes}
-Most problems we want to solve are supervised, we want to learn a mapping from inputs to outputs. However, supervised learning relies on labeled data, which can be expensive and time-consuming to obtain. In contrast, unsupervised learning can discover structure in data without labels, but is often more useful for exploratory analysis than for solving specific tasks.
-:::
-
-## The challenge of supervised learning: labeling
-
-
-```{python}
-#| echo: false
-#| eval: true
-from viz.supervised_learning_labeling import supervised_learning_labeling
-supervised_learning_labeling(width=500)
-```
-
-::: {.notes}
-The main challenge in supervised learning is obtaining labeled data, which can be expensive and time-consuming to collect and annotate. For certain problems, such as rare disease, we are fundamentally limited in how much labeled data we can get. This motivates the need for methods that can learn from unlabeled data.
-:::
 
 ## AI subfields
 
@@ -133,7 +76,8 @@ ai_donut([["ai", "ml", "rl", "dl"]])
 ::: {.notes}
 :::
 
-## Data representation is crucial for learning.
+
+## Data representation is crucial for learning
 
 ```{python}
 #| echo: false
@@ -147,13 +91,13 @@ cartesian_vs_polar()
 The way we represent data has a huge impact on how easy a problem is to solve. This toy example illustrates that in a cartesian representation, the classes are hard to easily separate, while in a polar representation they become linearly separable.
 :::
 
-## Principal Component Analysis (PCA)
+## Shallow representations -- Principal Component Analysis (PCA)
 
 ```{python}
 #| echo: false
 #| eval: true
 from viz.pca import pca_visualization
-pca_visualization()
+pca_visualization(600)
 ```
 
 ## Neural Networks learn representations from data
@@ -183,25 +127,300 @@ neural_network_transfer_learning()
 While there are many advantages to deep representation learning, one powerful consequence is that we can transfer the learned representations to new tasks. For example, a model trained on ImageNet learns general features that can be useful for many other vision tasks, even if the new task has limited data. This is known as transfer learning and is a key reason why deep learning has been so successful in practice. 
 :::
 
-## Self-supervised learning
 
-What if we can use the data it*self* to drive the learning of representations?
+## The classification head
+
+[![https://www.mathworks.com/discovery/convolutional-neural-network.html](./media/images/static/cnn_focus_on_classificaiton.png){width="80%"}](https://www.mathworks.com/discovery/convolutional-neural-network.html)
+
+The classification head typically has a fully connected layer followed by a softmax. The fully connected layer is what we'll look at here.
+
+## What is the core mechanism of neural networks? {.smaller .center}
+
+$$ \vec{y} = \operatorname{softmax}(W \vec{x} + \vec{\beta}) $$
+
+. . .
+
+$$ \Leftrightarrow $$
+
+$$ 
+\vec{y} = 
+\operatorname{softmax}(
+  \begin{bmatrix}
+    \vec{w}_1^\top \\
+    \vdots \\
+    \vec{w}_n^\top 
+  \end{bmatrix} \vec{x} + \vec{\beta})
+$$
+
+::: {.center}
+A matrix multiplication can be though of as a list of separate dot products. 
+
+**The core mechanism of neural networks is the dot product**
+:::
+
+## Properties of the dot product {.smaller}
 
 ```{python}
 #| echo: false
 #| eval: true
-from viz.selfsupervised_principle import selfsupervised_principle_visualization
-selfsupervised_principle_visualization()
+from viz import show_dot_product
+show_dot_product()
+```
+
+$$ \vec{a} \cdot \vec{b} = |\vec{a}||\vec{b}| \cos\theta $$
+
+- Dot product is directly connected to the _angle_ (alignment) between vectors
+- Neural Network learns by _aligning_ vectors
+
+::: {.notes}
+The cosine similarity is essentially the dot product of unit vectors.
+When two representations are identical in direction, cosine similarity = 1;
+orthogonal = 0; opposite = −1.
+:::
+
+## Graphical representations of neural networks
+
+![Different graphical representations of neural networks](./media/images/static/softmax_dot_product/dot_product_and_neural_networks.png){width="80%"}
+
+## Graphically representing softmax
+
+![Computational graph view of softmax](./media/images/static/softmax_dot_product/softmax.png)
+
+## Graphically representing softmax
+
+
+:::: {.columns}
+
+
+::: {.column width="50%"}
+
+![Computational graph view of softmax](./media/images/static/softmax_dot_product/softmax.png)
+
+:::
+
+::: {.column width="50%"}
+![MNIST example](./media/images/static/softmax_dot_product/mnist_to_2d.png)
+
+:::
+
+::::
+
+## Softmax angle alignment
+
+:::: {.columns}
+
+
+::: {.column width="50%"}
+
+![Computational graph view of softmax](./media/images/static/softmax_dot_product/mnist_to_2d.png)
+
+:::
+
+::: {.column width="50%"}
+
+```{python}
+#| echo: false
+#| eval: true
+from viz import show_softmax
+show_softmax()
+```
+
+:::
+
+::::
+
+# Contrastive learning
+
+## Using computed "softmax" weights
+
+
+:::: {.columns}
+
+
+::: {.column width="65%"}
+![No fixed "class" vectors](./media/images/static/mnist_to_2d_no_softmax.png)
+:::
+
+::: {.column width="35%"}
+![Embeddings of other examples act as the "class" vectors](./media/images/static/triplet_loss.png){width="80%"}
+:::
+
+::::
+
+
+## Contrastive learning - triplet loss {.smaller}
+
+
+:::: {.columns}
+
+
+::: {.column width="40%"}
+
+![](./media/images/static/triplet_loss.png){width="80%"}
+
+:::
+
+::: {.column width="60%"}
+
+![By Krishnachandranvn - Own work, CC BY-SA 4.0, https://commons.wikimedia.org/w/index.php?curid=138534332](./media/images/static/Triplet_Loss_Minimization.png)
+
+:::
+
+::::
+
+::: {.notes}
+The kind of loss used here was used a lot in face identification and  referred to as triplet loss, three different data points are used where two consists of a positive pair which we try to align (maximize the dot product), while the negative pair should have maximum dot product. The idea was that we want to learn a _metric_ over our data points which is semantic. Things which are close together are semantically  similar (images of the same person).
+
+What would happen if we didn't have any negative pairs?
+:::
+
+## Contrastive learning
+
+:::: {.columns}
+
+
+::: {.column width="40%"}
+
+![](./media/images/static/softmax_dot_product/contrastive_mnist.png)
+
+:::
+
+::: {.column width="60%"}
+
+```{python}
+#| echo: false
+#| eval: true
+from viz import show_triplet
+show_triplet()
+```
+
+:::
+
+::::
+
+
+## What negative samples? {.smaller}
+
+
+:::: {.columns}
+
+
+::: {.column width="40%"}
+
+- How do we select negative samples?
+  - Easiest is randomly
+  - But very likely to draw "easy" negative samples
+  - The model doesn't learn as much contrasting against these
+
+:::
+
+::: {.column width="60%"}
+
+
+![The setup learns more from hard negatives](./media/images/static/negative_sampling.png){width="60%"}
+
+
+:::
+
+::::
+
+
+. . .
+
+Why do we need negative samples?
+
+::: {.notes}
+While the idea of triplet loss and non-parametric softmax is to remove the fixed class vectors, the problem is still supervised in the sense that we need to know what data points we should bring together and which ones we should pull apart. Empirically it's not necessarily  better to use contrastive loss like this
+:::
+
+
+## Representation collapse
+
+```{python}
+#| echo: false
+#| eval: true
+from viz import show_representational_collapse
+show_representational_collapse(600)
 ```
 
 
-<!-- [![Self-supervised learning - Yan LeCun](./media/images/static/self_supervised_learning_lecun.png){fig-align="center" width="80%"}](https://youtu.be/7I0Qt7GALVk?si=-PPdfqhuaDKVJK4k) -->
+
+
+## Why contrastive learning
+
+::: {.incremental}
+- No need to decide on number of classes beforehand
+- We only need to know that some inputs are associated and some are not
+- By choosing what examples are negative vs. positive, we design what is learned
+:::
+
+
+## Supervised contrastive learning {.smaller}
+
+:::: {.columns}
+
+
+
+::: {.column width="50%"}
+
+```{python}
+#| echo: false
+#| eval: true
+#| fig-cap: Contrastive learning like we've seen here still needs labeled data, just like regular supervised learning
+from viz.supervised_vs_unsupervised import supervised
+supervised()
+```
+
+:::
+
+::: {.column width="50%"}
+
+
+![](./media/images/static/triplet_loss_labeled.png){width="60%"}
+
+:::
+
+::::
+
+::: {.notes}
+Most problems we want to solve are supervised, we want to learn a mapping from inputs to outputs. However, supervised learning relies on labeled data, which can be expensive and time-consuming to obtain. In contrast, unsupervised learning can discover structure in data without labels, but is often more useful for exploratory analysis than for solving specific tasks.
+:::
+
+## The practical meaning of supervised learning -- labeling
+
+```{python}
+#| echo: false
+#| eval: true
+from viz.supervised_learning_labeling import supervised_learning_labeling
+supervised_learning_labeling(width=500)
+```
+
+::: {.notes}
+The main challenge in supervised learning is obtaining labeled data, which can be expensive and time-consuming to collect and annotate. For certain problems, such as rare disease, we are fundamentally limited in how much labeled data we can get. This motivates the need for methods that can learn from unlabeled data.
+:::
+
+# Self-supervised learning
+
+## Self-supervised learning
+
+What if we can use the data *itself* to drive the learning of representations?
+
+
+```{python}
+#| echo: false
+#| eval: true
+#from viz.selfsupervised_principle import selfsupervised_principle_visualization
+#selfsupervised_principle_visualization()
+```
+
+
+[![Self-supervised learning - Yan LeCun](./media/images/static/self_supervised_learning_lecun.png){fig-align="center" width="80%"}](https://youtu.be/7I0Qt7GALVk?si=-PPdfqhuaDKVJK4k)
 
 ::: {.notes}
 Transfer learning is promising, but requires large amounts of labeled data to learn useful representations from. Manually annotating data is expensive and time-consuming. Self-supervised learning is a paradigm that allows us to learn useful representations without manual annotation by creating labels from the data itself.
 :::
 
-## Autoencoders
+## Basic selfsupervision -- Autoencoders
 
 An autoencoder is a neural network trained to:
 
@@ -222,6 +441,7 @@ autoencoder_visualization()
 The key insight: the network learns a compressed representation without labels.
 :::
 
+<!--
 ## Architecture {.smaller}
 
 :::: {.columns}
@@ -287,68 +507,230 @@ def train_step(x):
 Note that we use the input as both input and target — no labels needed.
 :::
 
-## Similarity in Latent Space
 
-How do we measure if two representations are *similar*?
-
-$$\cos\theta = \frac{\vec{a} \cdot \vec{b}}{|\vec{a}||\vec{b}|}$$
-
-- Dot product captures alignment between vectors
-- Normalized → cosine similarity ∈ [−1, 1]
-- Used widely in contrastive and self-supervised learning
-
-## Visualizing Dot Product
-
-```{python}
-#| echo: false
-#| eval: true
-from viz import show_dot_product
-show_dot_product()
-```
-
-::: {.notes}
-The cosine similarity is essentially the dot product of unit vectors.
-When two representations are identical in direction, cosine similarity = 1;
-orthogonal = 0; opposite = −1.
-:::
-
-## Latent Space Visualization
-
-### Visualizing representations with UMAP
-
-```{python}
-#| echo: true
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Placeholder: visualize encoded representations
-z = np.random.randn(200, 2)
-labels = np.random.randint(0, 10, 200)
-
-plt.figure(figsize=(6, 5))
-scatter = plt.scatter(z[:, 0], z[:, 1], c=labels, cmap="tab10", s=20)
-plt.colorbar(scatter)
-plt.title("2D Latent Space")
-plt.tight_layout()
-plt.show()
-```
 
 ## Variants
 
 | Variant | Key Idea |
 |---|---|
 | Denoising AE | Reconstruct clean input from corrupted input |
+| Stacked AE | Iteratively add inner layers to encoder and decoder |
 | Variational AE (VAE) | Learn a probabilistic latent space |
 | Sparse AE | Penalize non-zero activations |
 | Convolutional AE | Use conv layers for image data |
+-->
+
+## Shortcomings of autoencoders
+
+[![From the Deep Learning book (Goodfellow, Bengio, Courville)](./media/images/static/autoencoder_finn_dl_book.png){fig-align="center" width="50%"}](https://www.deeplearningbook.org/contents/representation.html)
+
+::: {.notes}
+Minimizing mean squared error in pixel space is similar to PCA, it mainly captures the directions of most variation (in pixel space). This does not necessarily mean it captures the semantically meaningful features. Is there some other way we can learn representations without manual labelling?
+:::
+
+
+## Self-supervised examples - predict in context {.smaller}
+
+::: {#fig-ssl-predictive layout-ncol=3 style="font-size: 10%;"}
+
+![Pathak, Deepak, et al. "Context encoders: Feature learning by inpainting." Proceedings of the IEEE conference on computer vision and pattern recognition. 2016.](./media/images/static/pathak_context_encoders.png){width="80%"}
+
+![Noroozi, Mehdi, and Paolo Favaro. "Unsupervised learning of visual representations by solving jigsaw puzzles." European conference on computer vision. Cham: Springer International Publishing, 2016.](./media/images/static/noroozi_favaro_jigsaw.png)
+
+![Doersch, Carl, Abhinav Gupta, and Alexei A. Efros. "Unsupervised visual representation learning by context prediction." Proceedings of the IEEE international conference on computer vision. 2015.](./media/images/static/doesch_context_prediction.png){width="80%"}
+
+:::
+
+
+ 
+
+## Constrastive self-supervised learning {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%" }
+
+- Instead of relying on existing positive pairs, we can create them
+- As long as the pairs we create have a semantic association, there is something to learn
+- SimCLR is a very successful example of this
+
+:::
+
+::: {.column width="50%"}
+![Chen, Ting, et al. "A simple framework for contrastive learning of visual representations." International conference on machine learning. PmLR, 2020.](./media/images/static/simclr_gif.gif){width="80%"}
+:::
+::::
+
+## Beyond contrastive learning
+
+:::: {.columns}
+
+::: {.column width="50%" }
+
+- The central part of contrastive learning is to bring associated examples close together
+- Why do we need negative examples?
+  - To avoid representational collapse
+
+:::
+
+::: {.column width="50%"}
+
+
+```{python}
+#| echo: false
+#| eval: true
+from viz import show_representational_collapse
+show_representational_collapse()
+```
+:::
+
+::::
+
+
+<!--
+## Are negative samples enough?
+
+::: {.incremental}
+- Negative samples forces our model to predict different things for different inputs
+- However, randomly sampling negative samples are likely to lead to ones which were already well discriminated
+  - How do we learn subtle semantic differences?
+  - Advanced schemes of "negative sample mining" - use intermediate phase to "group" samples based on closeness, sample negative samples proportional to their closeness to the positive
+  - Encourages better discrimination in representation space
+- This makes the learning algorithm more difficult to train, the negative sampling scheme becomes an additional part to tweak
+:::
+--> 
+
+## BYOL - Bootstrap your own latents {.smaller}
+
+- Instead of avoiding representation collapse by using negative contrastive examples, what if we have two different models?
+  - The main network we try to train -- the online network
+  - Another network we use to create the representations -- the target network
+
+![Grill, Jean-Bastien, et al. "Bootstrap your own latent - a new approach to self-supervised learning." Advances in neural information processing systems 33 (2020): 21271-21284.](./media/images/static/byol.png){width="100%"}
+
+## DINO = BYOL + Vision Transformers
+
+![Caron, Mathilde, et al. "Emerging properties in self-supervised vision transformers." Proceedings of the IEEE/CVF international conference on computer vision. 2021.](./media/images/static/dino_pipeline.png){width="100%"}
+
+## DINO v3 {.smaller}
+
+- Development of DINO v2 to increase model scale 
+  - Large data with auto curation
+  - Regularized patch representations with Gram matching
+
+
+![Siméoni, Oriane, et al. "Dinov3." arXiv preprint arXiv:2508.10104 (2025).](./media/images/static/dinov3-perf.png){width="100%"}
+
+
+::: {.notes}
+ for images have been hard
+  - Models are unstable in terms of performance
+  - Coherence of attention maps degrade over training time
+- DINO v3 introduces a series of tricks to improve this
+  - Automated data curation - train on larger sets of data with higher average quality 
+    - Starts from a pool of 17B images from Instagram, clusters and chooses balanced coverage to 1689 million images
+  - Tweaks to architecture (positional embeddings)
+  - Regularizing the attention  maps (Gram matching)
+    - Match matrix of pairwise dot products of all patches to a example from early on in training (regularizing the feature structure, keeping it spread oout) 
+- Scaling up SSL methods like DINO (in terms of model size) for images have been hard
+  - Models are unstable in terms of performance
+  - Coherence of attention maps degrade over training time
+- DINO v3 introduces a series of tricks to improve this
+:::
+
+
+## DINO v3 - Gram matching {.smaller} 
+
+
+::: {#fig-dinov3 layout-ncol=2}
+  
+![](./media/images/static/dinov3-degradation-over-time-2.png){width="100%"}
+
+![](./media/images/static/dinov3-gram-matching.png){width="100%"}
+
+Siméoni, Oriane, et al. "Dinov3." arXiv preprint arXiv:2508.10104 (2025).
+
+:::
+
+$$ \mathcal{L}_\text{Gram} = \lVert \mathbf{X}_S \cdot \mathbf{X}_S^\top - \mathbf{X}_G \cdot \mathbf{X}_G^\top \rVert_\text{F}^2 $$
+
+Constrain all the pairs of inner products to be similar to an earlier version of the model
+
+::: {.notes}
+ for images have been hard
+  - Models are unstable in terms of performance
+  - Coherence of attention maps degrade over training time
+- DINO v3 introduces a series of tricks to improve this
+  - Automated data curation - train on larger sets of data with higher average quality 
+    - Starts from a pool of 17B images from Instagram, clusters and chooses balanced coverage to 1689 million images
+  - Tweaks to architecture (positional embeddings)
+  - Regularizing the attention  maps (Gram matching)
+    - Match matrix of pairwise dot products of all patches to a example from early on in training (regularizing the feature structure, keeping it spread oout) 
+- Scaling up SSL methods like DINO (in terms of model size) for images have been hard
+  - Models are unstable in terms of performance
+  - Coherence of attention maps degrade over training time
+- DINO v3 introduces a series of tricks to improve this
+:::
+
+
+# Multimodal Learning {.smaller}
+
+![Multimodal Machine Learning tutorial - ACL2017 -- https://www.cs.cmu.edu/~morency/MMML-Tutorial-ACL2017.pdf](./media/images/static/multimodal_machine_learning_sensor_modalities.png)
+
+
+## Use modalities to label each other {.smaller}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+![With supervised contrastive learning we need to label the data](./media/images/static/triplet_loss_labeled.png){width="60%"}
+
+:::
+
+::: {.column width="60%"}
+
+![Arandjelovic, Relja, and Andrew Zisserman. "Look, listen and learn." Proceedings of the IEEE International Conference on Computer Vision. 2017.](./media/images/static/look_and_listen_base.png){width="100%"}
+
+:::
+
+
+::::
+
+With multimodal data we have "natural" associations in the separate modalities.  
+
+
+## Use modalities to label each other {.smaller}
+
+::: {#fig-dinov3 layout-ncol=2}
+  
+![](./media/images/static/look_and_listen_retrieval.png){width="100%"}
+
+![](./media/images/static/look_and_listen_heatmap.png){width="100%"}
+
+Arandjelovic, Relja, and Andrew Zisserman. "Look, listen and learn." Proceedings of the IEEE International Conference on Computer Vision. 2017.
+za
+:::
+
+## Use modalities to label each other {.smaller}
+
+![Afham, Mohamed, et al. "Crosspoint: Self-supervised cross-modal contrastive learning for 3d point cloud understanding." Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2022.
+](./media/images/static/crosspont_contrastive.png)
+
+## CLIP {.smaller}
+
+![https://github.com/openai/CLIP](./media/images/static/CLIP.png)
+
+
+## CLIP {.smaller}
+
+![Radford, Alec, et al. "Learning transferable visual models from natural language supervision." International Conference on Machine Learning. PMLR, 2021.](./media/images/static/clip_comparison.png)
+
 
 ## Summary
 
-- Autoencoders learn compact representations **without labels**
-- Encoder compresses, decoder reconstructs
-- Many variants for different tasks
-- Foundation for more advanced methods (VAE, MAE, etc.)
+- Contrastive learning is a general technique for learning representations
+- Self-supervised learning is about crafting ways of learning from unlabeled data
+- Clever augmentations technique can use contrastive learning without labled data
+- Multimodal data is perfect for contrastive learning, the modalities "label each other"
 
-::: {.notes}
-Next lecture: Variational Autoencoders and the reparameterization trick.
-:::

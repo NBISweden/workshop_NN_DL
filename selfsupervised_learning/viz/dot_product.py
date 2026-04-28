@@ -33,7 +33,9 @@ class DotProductScene(Scene):
         self.add(plane)
 
         # ── Vectors ──────────────────────────────────────────────────────────
-        A = np.array([2.5, 0.5, 0.0])
+        A_angle = np.pi/8
+        A_MAG = 2
+        A = np.array([np.cos(A_angle)*A_MAG, np.sin(A_angle)*A_MAG, 0.0])
         B_MAG = 2.2
         angle = ValueTracker(PI / 3)        # start at 60°
 
@@ -85,7 +87,7 @@ class DotProductScene(Scene):
         formula = MathTex(
             r"\vec{a} \cdot \vec{b} = |\vec{a}||\vec{b}|\cos\theta",
             font_size=30, color=WHITE,
-        ).to_corner(UP + LEFT).shift(np.array([-0.4, -0.5, 0]))
+        ).to_corner(UP + LEFT).shift(np.array([0.4, -0.5, 0]))
 
         def _dot() -> float:
             return float(np.dot(A, b_tip()))
@@ -114,25 +116,27 @@ class DotProductScene(Scene):
         self.add(label_b, arc, theta_lbl)
         self.play(Write(formula), run_time=0.7)
         self.play(FadeIn(dot_readout), FadeIn(cos_readout), run_time=0.5)
-        self.wait(0.4)
-
-        # ── Sweep: toward parallel (θ → ~0) ─────────────────────────────────
-        self.play(angle.animate.set_value(0.08), run_time=2.0, rate_func=smooth)
-        self.wait(0.3)
+        self.wait(0.8)
+        
         self.add(proj)                          # reveal projection at near-parallel
+        
+        # ── Sweep: toward parallel (θ → ~0) ─────────────────────────────────
+        self.play(angle.animate.set_value(A_angle+0.1), run_time=3.0, rate_func=smooth)
+        self.wait(0.3)
+        
         self.wait(0.4)
 
         # ── Sweep: orthogonal (θ = π/2) ──────────────────────────────────────
-        self.play(angle.animate.set_value(PI / 2), run_time=2.0, rate_func=smooth)
-        self.wait(0.5)
+        self.play(angle.animate.set_value(A_angle + (PI / 2)), run_time=3.0, rate_func=smooth)
+        self.wait(1)
 
         # ── Sweep: anti-parallel (θ → π) ─────────────────────────────────────
-        self.play(angle.animate.set_value(PI - 0.08), run_time=2.0, rate_func=smooth)
-        self.wait(0.5)
+        self.play(angle.animate.set_value(A_angle + PI), run_time=3.0, rate_func=smooth)
+        self.wait(1)
 
         # ── Return to a nice angle ────────────────────────────────────────────
         self.play(angle.animate.set_value(PI / 4), run_time=1.5, rate_func=smooth)
-        self.wait(1.0)
+        self.wait(5.0)
 
 
 # ── Display helper (used in Quarto cells) ────────────────────────────────────
@@ -145,7 +149,7 @@ _MIME_TYPES = {
 }
 
 
-def show_dot_product(width: int = 800) -> None:
+def show_dot_product(width: int = 700) -> None:
     """Embed the pre-rendered DotProductScene inline (Jupyter / Quarto).
 
     Accepts any format produced by Manim (mp4, webm, mov, gif).
