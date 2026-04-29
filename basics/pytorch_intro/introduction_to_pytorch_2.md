@@ -13,7 +13,7 @@ jupyter:
     name: python3
 ---
 
-<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
 # Intro to programming and training Neural Networks with PyTorch, part 2
 
 
@@ -220,7 +220,7 @@ THE activation function for classification (output layer only):
 * But Softmax is usually calculated inside the Loss function
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Softmax
 
 It's an activation function applied to a output vector z with K elements (one per class) and outputs a probability distribution over the classes:
@@ -238,6 +238,8 @@ What makes softmax your favorite activation:
 * Monotonically increasing output with increasing input
 
 Softmax is usually only used to activate the last layer of a NN
+
+**In Torch, you generally never do: `model.append(nn.Softmax())`, as it is applied automatically inside the Loss function!**
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
@@ -326,21 +328,21 @@ from IPython.display import IFrame
 IFrame('https://polarisation.github.io/tfjs-activation-functions/', width=860, height=470) 
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Setting activations in PyTorch
 
 We can add activations as separate layers:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python slideshow={"slide_type": "-"} editable=true
 model = nn.Sequential()
 model.append(nn.Linear(3, 4))
 model.append(nn.ReLU())
 model.append(nn.Linear(4, 2))
-model.append(nn.Softmax())
+model.append(nn.Softmax()) # usually not necessary to have this as last layer!
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Even more layers
 
 * `Linear` is the classic FFNN where all nodes between layers are connected
@@ -370,7 +372,7 @@ m = nn.Conv1d(16, 33, 3, stride=2)
 [(source)](https://en.wikipedia.org/wiki/Convolutional_neural_network)
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Recurrent layers
 
 * Used when the _temporal_ relationship between inputs is significant
@@ -390,7 +392,7 @@ gru = nn.GRU(input_size, hidden_size, num_layers=1)
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Embedding layers
 
 * Used to transform a discrete input into a vector
@@ -484,12 +486,4 @@ model = ComplexModel()
 * Remember the XOR classifier? Or the Boston housing dataset?
 * Can you apply some of the things we have learned today on the models from yesterday?
 * Do they help?
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## Exercise 4 (optional)
-
-Classifying IMDB reviews into positive or negative.
-
-Check the exercises notebook!
 <!-- #endregion -->

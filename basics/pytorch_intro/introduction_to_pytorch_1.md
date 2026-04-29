@@ -528,32 +528,21 @@ In reality, there are a few more things to keep track of. Here is a more complet
 device = None
 if device is None:
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
 # send the model to whatever device we're using
 model.to(device)
-    
 for epoch in range(max_epochs):
-    # reset metrics
-    training_loss_acc = 0
-    training_examples = 0
     # put model in "training mode"
     model.train()
-
     # training loop, one epoch
     for i, batch in enumerate(train_loader):
         optimizer.zero_grad()
-        
         x_batch, y_batch = batch
         # send data to whatever device we're using
         x_batch = x_batch.to(device)  
         y_hat = model(x_batch)
-
         loss = criterion(y_hat, y_batch.to(device))
         loss.backward()
-
         optimizer.step()
-        training_loss_acc += loss.item()
-        training_examples += x_batch.size(0)
 ```
 <!-- #endregion -->
 
@@ -562,7 +551,7 @@ for epoch in range(max_epochs):
 
 * Let's not forget the actual data!
 * First, we define a `Dataset` as a set of tensor features and labels
-* Then, we define a `DataLoader` process the `Dataset` before handing it to the network
+* Then, we define a `DataLoader` to process the `Dataset` before handing it to the network
 * We can also split our data into two or more parts that will be used for different purposes
 <!-- #endregion -->
 
@@ -854,8 +843,7 @@ liveplot = LivePlot()
 model = MLP(input_dim=3, output_dim=2, hidden_dim=3)
 
 learning_rate = 1e-3
-weight_decay = 1e-5
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 epochs = 20
 liveplot.increment(20)
@@ -906,7 +894,7 @@ plt.scatter(transformed[:,0], transformed[:,1], c=xor_labels)
 Now let's fit a model to the data:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python slideshow={"slide_type": "-"} editable=true
 dataset = TensorDataset(torch.tensor(xor_data, dtype=torch.float32), 
                         torch.tensor(xor_labels, dtype=torch.long))
 percentage_dev = 0.1
@@ -925,10 +913,9 @@ liveplot = LivePlot()
 model = MLP(input_dim=3, output_dim=2, hidden_dim=3)
 
 learning_rate = 1e-3
-weight_decay = 1e-5
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
-max_epochs = 20
+max_epochs = 200
 liveplot.increment(max_epochs)
 train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=max_epochs, liveplot=liveplot)
 ```
@@ -946,7 +933,7 @@ train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=o
 * Check the exercise notebook!
 <!-- #endregion -->
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -966,8 +953,7 @@ liveplot = LivePlot()
 model = MLP(input_dim=3, output_dim=2, hidden_dim=16)
 
 learning_rate = 1e-3
-weight_decay = 1e-5
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 
 max_epochs = 20
