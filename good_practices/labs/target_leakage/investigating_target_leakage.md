@@ -61,8 +61,7 @@ import sys
 from typing import Optional
 
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import plotly.express as px
 
 import torch
 import torch.nn as nn
@@ -71,8 +70,7 @@ import torchmetrics
 
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
-from scipy.spatial.distance import squareform
+from sklearn.decomposition import PCA
 
 class LivePlot():
     def __init__(self):
@@ -204,8 +202,6 @@ Lastly, we assign to our labels (in this case the author of the tweets) one clas
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-import numpy as np
-
 #Get rid of all retweets
 tweet_dataset_clean = tweet_dataset[tweet_dataset["is_retweet"] == False]
 
@@ -225,7 +221,7 @@ tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'@[a-zA-Z
 tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'\n', '', case=False, regex=True)
 
 #Now let's make sure that non-alphanumeric characters are taken as single words
-#tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', ' \\1 ', case=False, regex=True)
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', ' \\1 ', case=False, regex=True)
 
 #split the tweets in list of words
 tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.strip()
@@ -302,7 +298,7 @@ class Model(nn.Module):
         embeddings = self.embedding(x)                  # (batch, window, embed_size)
 
         if self.convolutional:
-            x = embedding.permute(0, 2, 1)             # (batch, embed_size, window)
+            x = embeddings.permute(0, 2, 1)             # (batch, embed_size, window)
             x = torch.relu(self.conv1(x))
             x = torch.relu(self.conv2(x))
             x = torch.relu(self.conv3(x))
@@ -360,7 +356,7 @@ Train the model and plot the training curves:
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # load a new model
-model = Model(convolutional=False, vocabulary_size=count, sequence_length=train_x.shape[1])
+model = Model(convolutional=True, vocabulary_size=count, sequence_length=train_x.shape[1])
 
 # define optimizer and loss function
 epochs = 20
@@ -424,8 +420,6 @@ How do we convert these predicted values into probabilities?
 Now let's visualize the outputs of the embedding layer. We extract the embedding layer from the trained model and we use it to calculate embeddings for every word in our dictionary. Then, we map the 32-dimensional output vector onto 2 dimensions with the help of principal component analysis (PCA).
 
 ```python editable=true slideshow={"slide_type": ""}
-from sklearn.decomposition import PCA
-
 n_words = 1000
 words = torch.tensor(np.arange(n_words)[None, :])
 embedded_words = np.squeeze(model.embedding(words).cpu().detach().numpy())
@@ -435,8 +429,7 @@ points_pca = pca.fit_transform(embedded_words)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-import plotly.express as px
-fig = px.scatter(x=points_pca[:,0], y=points_tsne[:,1], text=[word_dict[i] if i < 1000 else "" for i in range(n_words)], width=2400, height=800)
+fig = px.scatter(x=points_pca[:,0], y=points_tsne[:,1], text=[word_dict[i] if i < 8000 else "" for i in range(n_words)], width=2400, height=800)
 fig.update_traces(textposition='top center')
 fig.show()
 ```
