@@ -1,0 +1,8 @@
+# -*- yaml -*-
+# Render Jupyter notebooks
+project:
+  type: default
+  output-dir: .
+  render:
+    - examples/useful_cells.qmd
+    - basics/labs/lab_introduction_to_pytorch.md
