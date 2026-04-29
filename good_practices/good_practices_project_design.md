@@ -75,9 +75,10 @@ model = nn.Sequential(
 list([p.shape for p in model.parameters()])
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Parameters (weights) vs. samples
 
+* A 2-hidden layer FFNN can perfectly store $O(Q^2)$ samples with $Q$ hidden nodes ([ref](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1189626))
 * If the number of parameters is many times higher than the number of samples a NN will never work
 * Ideally, we are looking for the inverse: way more samples than parameters
 * Some rules of thumb out there:
@@ -111,7 +112,7 @@ list([p.shape for p in model.parameters()])
 source: [datarobot](https://www.datarobot.com/blog/a-primer-on-deep-learning/)
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## And even when both these conditions have been met
 
 ... you need a few more things:
@@ -121,7 +122,7 @@ source: [datarobot](https://www.datarobot.com/blog/a-primer-on-deep-learning/)
 * You also need lots of patience and time, these things rarely work out of the box
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## A few more things to keep in mind
 
 * You need extensive knowledge of your data:
@@ -131,7 +132,7 @@ source: [datarobot](https://www.datarobot.com/blog/a-primer-on-deep-learning/)
 
 And therein lies the main issue:
 * Some think that DL is about having a model magically fixing your data
-* Instead, DL is _mostly_ about knowing your data
+* Reality: your network will be as good as your data at best
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
