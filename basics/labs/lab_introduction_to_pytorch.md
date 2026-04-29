@@ -327,7 +327,7 @@ This dataset contains 50k reviews for movies in IMDB, split into a train and tes
 
 Download the raw data and read it into a data structure:
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 !mkdir -p data
 !wget -P ./data https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
 !tar -C ./data -zxf ./data/aclImdb_v1.tar.gz

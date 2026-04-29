@@ -13,7 +13,7 @@ jupyter:
     name: python3
 ---
 
-<!-- #region editable=true id="spaKCdatXNU2" -->
+<!-- #region editable=true id="spaKCdatXNU2" slideshow={"slide_type": ""} -->
 # Rigorous splitting of datasets into train and validation
 <!-- #endregion -->
 
@@ -48,7 +48,7 @@ Of course, a neural network will not accept a string input as it is, so we will 
 
 <!-- #endregion -->
 
-<!-- #region editable=true id="y2Pnjv9aXNU6" -->
+<!-- #region editable=true id="y2Pnjv9aXNU6" slideshow={"slide_type": ""} -->
 ## To work on google colab
 
 * Upload this notebook to Colab
@@ -86,7 +86,7 @@ First, let's setup the colab environment, download dataset and other relevant da
 Now let's load libraries and plotting functions:
 <!-- #endregion -->
 
-```python editable=true id="sSo9dHhgXNVD"
+```python editable=true id="sSo9dHhgXNVD" slideshow={"slide_type": ""}
 import pickle
 import random
 import sys
@@ -204,7 +204,7 @@ def train(*,
 Now let's create a model. Modify the code below to try different architectures:
 <!-- #endregion -->
 
-```python editable=true id="W-quIwKfXNVI"
+```python editable=true id="W-quIwKfXNVI" slideshow={"slide_type": ""}
 
 class Model(nn.Module):
     def __init__(self, convolutional=False):
@@ -285,7 +285,7 @@ dev_list = target_list[:int(n_targets/20)] #5% validation
 The data is now converted from a list of np arrays to a tensor set:
 <!-- #endregion -->
 
-```python id="oFmpiP1zXNVK"
+```python id="oFmpiP1zXNVK" editable=true slideshow={"slide_type": ""}
 train_x = np.concatenate([X[target] for target in train_list if target in X], axis=0)
 train_y = np.concatenate([y[target] for target in train_list if target in X], axis=0)
 
@@ -308,7 +308,7 @@ dev_loader = DataLoader(
     )
 ```
 
-```python colab={"base_uri": "https://localhost:8080/", "height": 377, "referenced_widgets": ["21f2a04f4deb4d1f9a3d5bc9ca1a47d4"]} id="UmFf4NfNXNVL" outputId="648218a9-f3e9-48e7-dd9e-5346e19188bf"
+```python colab={"base_uri": "https://localhost:8080/", "height": 377, "referenced_widgets": ["21f2a04f4deb4d1f9a3d5bc9ca1a47d4"]} id="UmFf4NfNXNVL" outputId="648218a9-f3e9-48e7-dd9e-5346e19188bf" editable=true slideshow={"slide_type": ""}
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # load a new model
@@ -472,7 +472,7 @@ print(f"Test accuracy: {acc.item()}")
 Now let's make things even worse on purpose: whenever a cluster contains more than one sample, let's put half in the training set and half in the validation set. Then let's not shuffle the trainset so that the network sees those samples first.
 <!-- #endregion -->
 
-```python id="TJhL4dx0XNVP"
+```python id="TJhL4dx0XNVP" editable=true slideshow={"slide_type": ""}
 bad_model = Model(convolutional=False)
 
 all_x = np.concatenate([X[target] for target in target_list if target in X], axis=0)
