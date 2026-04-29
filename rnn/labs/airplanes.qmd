@@ -16,10 +16,10 @@ format:
   html:
     code-fold: true
 description: Airplanes lab
-execute:
-  eval: true
 notebook-url: "[airplanes.ipynb](rnn/labs/airplanes.ipynb)"
 ---
+
+<!-- -->
 
 ```{python }
 
@@ -225,8 +225,10 @@ class AirlineRNN(...):
         # Add one RNN layer and 1-2 Linear layers
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Suggested solution: simple RNN model
 class AirlineRNN(nn.Module):
     def __init__(self, hidden_size=20, output_size=8):
@@ -255,6 +257,8 @@ class AirlineRNN(nn.Module):
             return self(x)
 ```
 
+<!-- -->
+
 Once you are happy with the configuration, initialize the model and
 choose an appropriate loss function and optimizer.
 
@@ -268,17 +272,23 @@ model = AirlineRNN()
 model.to(device)
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Solution: loss function
 loss_fn = nn.MSELoss()
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Solution: loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 ```
+
+<!-- -->
 
 ### Training
 
@@ -290,6 +300,8 @@ the model parameters is then calculated with backward propagation,
 which is then passed on to and utilized by the optimizer to update
 weights that will hopefully improve network performance in the next
 epoch. To this end, we define an explicit training function:
+
+<!-- -->
 
 ```{python }
 def train_loop(dataloader, model, loss_fn, optimizer, device, loginterval=None):
@@ -470,8 +482,10 @@ class AirlineLSTM(...):
         # Add LSTM layer(s) and 1-2 Linear layers
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Suggested solution: simple LSTM model
 class AirlineLSTM(nn.Module):
     def __init__(self, hidden_size=20, output_size=8, num_layers=2):
@@ -499,6 +513,8 @@ class AirlineLSTM(nn.Module):
             return self(x)
 ```
 
+<!-- -->
+
 Once you're satisfied, initialize the model, choose loss function and
 optimizer and train.
 
@@ -508,17 +524,23 @@ model = AirlineLSTM()
 model.to(device)
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Solution: loss function
 loss_fn = nn.MSELoss()
 ```
 
+<!-- -->
+
 ```{python }
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Solution: loss function
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 ```
+
+<!-- -->
 
 ```{python }
 epochs = 200

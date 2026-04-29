@@ -16,8 +16,6 @@ format:
   html:
     code-fold: true
 description: Alphabet lab
-execute:
-  eval: true
 notebook-url: "[alphabet.ipynb](rnn/labs/alphabet.ipynb)"  
 ---
 
@@ -342,7 +340,7 @@ loss_fn = nn.LossFunction()
 ```
 
 ```{python}
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Suggested loss function
 #
 # Since we have a classification problem with 26 classes and the model
@@ -364,7 +362,7 @@ optimizer = torch.optim.Optimizer(model.parameters(), lr=learning_rate)
 ```
 
 ```{python}
-#| jupyter: {source_hidden: true}
+# source_hidden
 # Suggested optimizer
 #
 # Since RNNs are prone to gradient problems, the Adam optimizer is an

@@ -40,7 +40,7 @@ execute:
   cache: true
   include: true
   autodep: true
-  eval: true
+  eval: false
   error: true
 
 extensions:

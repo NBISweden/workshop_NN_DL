@@ -4,3 +4,5 @@ project:
   render:
     - rnn/labs/alphabet.qmd
     - rnn/labs/airplanes.qmd
+  post-render:  # Remove <!-- --> blocks and hide source_hidden blocks
+    - scripts/post-render.sh
