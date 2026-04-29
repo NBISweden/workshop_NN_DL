@@ -49,7 +49,6 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, Subset
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-import rnnutils
 ```
 
 ## Aims
@@ -407,7 +406,7 @@ can plot the training and validation metrics with a utility function
 defined in the `rnnutils` module.
 
 ```{python}
-rnnutils.plot_loss_acc(metrics)
+# rnnutils.plot_loss_acc(metrics)
 ```
 
 ### Printing predictions
@@ -556,7 +555,7 @@ print("Done!")
 ```
 
 ```{python}
-rnnutils.plot_loss_acc(metrics)
+# rnnutils.plot_loss_acc(metrics)
 ```
 
 ### Prediction

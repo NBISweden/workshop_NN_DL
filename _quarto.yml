@@ -35,7 +35,7 @@ format:
     ultitle: true
 
 execute:
-  echo: false
+  echo: true
   warning: false
   cache: true
   include: true

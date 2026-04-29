@@ -38,12 +38,7 @@ jobs:
 
       - name: Render Quarto pages
         run: |
-          pixi run -e teachers quarto render --profile all --to html
-          cp -r _site/site_libs _site_libs_backup
-          pixi run -e teachers quarto render --profile labs --to ipynb --no-clean
-          pixi run -e teachers quarto render --profile revealjs --no-clean
-          rsync -av _site_libs_backup/ _site/site_libs/
-          rm -rf _site_libs_backup
+          pixi run render
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

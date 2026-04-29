@@ -85,4 +85,9 @@ rnn = ["quarto", "pythonlibs", "torch", "rlibs"]
 [tasks]
 test = "python -c 'import torch; print(torch.cuda.is_available())'"
 jupyter-lab = "jupyter lab --no-browser"
+render_all = { default-environment = "teachers", cmd = "quarto render --profile all --to html" }
+sync_sitelibs = { default-environment = "teachers", cmd = "cp -r _site/site_libs _site_libs_backup", depends-on = ["render_all"] }
+render_ipynb = { default-environment="teachers", cmd = "quarto render --profile ipynb --to ipynb --no-clean --no-execute", depends-on = ["sync_sitelibs"] }
+render_revealjs = { default-environment="teachers", cmd = "quarto render --profile revealjs --no-clean", depends-on = ["render_ipynb"] }
+render = { default-environment="teachers", cmd = "rsync -av _site_libs_backup/ _site/site_libs/ && rm -rf _site_libs_backup", depends-on = ["render_revealjs"] }
 
