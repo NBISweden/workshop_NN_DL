@@ -53,16 +53,10 @@ Only for Tuesday's session:
 
 Plotting and training helper functions:
 
-```python
-torchmetrics.Accuracy
-```
-
 ```python editable=true slideshow={"slide_type": ""}
 from typing import Optional
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.io as pio
-pio.renderers.default = "iframe"
 
 import torch
 import torch.nn as nn
@@ -203,8 +197,7 @@ epochs = 20
 
 # define optimizer and loss function
 learning_rate = 1e-3
-weight_decay = 1e-5
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=2, top_k=1)
 
@@ -330,36 +323,80 @@ train(model=model,
 
 ## 4. The IMDB movie review sentiment dataset
 
-Another pre-package toy dataset from Keras. Contains 25k reviews for a movies in IMDB, you want to predict whether the review is positive or negative.
+This dataset contains 50k reviews for movies in IMDB, split into a train and test set of equal size. You want to predict whether the review is positive or negative.
 
-> each review is encoded as a list of word indexes (integers). For convenience, words are indexed by overall frequency in the dataset, so that for instance the integer "3" encodes the 3rd most frequent word in the data. This allows for quick filtering operations such as: "only consider the top 10,000 most common words, but eliminate the top 20 most common words".
+Download the raw data and read it into a data structure:
 
-https://keras.io/api/datasets/imdb/
+```python
+!mkdir -p data
+!wget -P ./data https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
+!tar -C ./data -zxf ./data/aclImdb_v1.tar.gz
+```
 
-
-Load the dataset, set a couple of important parameters (max_features, maxlen). Also pad all reviews with less than 200 words so that they have all the same length.
+Load the dataset:
 
 ```python editable=true slideshow={"slide_type": ""}
-# import datasets
-from torchtext.datasets import IMDB
+import os
+import glob
 
-train_iter = IMDB(split='train')
+def imdb_dataset(directory='data/',
+                 train=False,
+                 test=False,
+                 train_directory='train',
+                 test_directory='test',
+                 extracted_name='aclImdb',
+                 check_files=['aclImdb/README'],
+                 sentiments=['pos', 'neg']):
+    """
+    Returns:
+        :class:`tuple` of :class:`iterable` or :class:`iterable`:
+        Returns between one and all dataset splits (train, dev and test) depending on if their
+        respective boolean argument is ``True``.
 
-def tokenize(label, line):
-    return line.split()
+    Example:
+        [{
+          'text': 'For a movie that gets no respect there sure are a lot of memorable quotes...',
+          'sentiment': 'pos'
+        }, {
+          'text': 'Bizarre horror movie filled with famous faces but stolen by Cristina Raines...',
+          'sentiment': 'pos'
+        }]
+    """
 
-tokens = []
-for label, line in train_iter:
-    tokens += tokenize(label, line)
+    ret = []
+    splits = [
+        dir_ for (requested, dir_) in [(train, train_directory), (test, test_directory)]
+        if requested
+    ]
+    for split_directory in splits:
+        full_path = os.path.join(directory, extracted_name, split_directory)
+
+        examples = []
+        for sentiment in sentiments:
+            for filename in glob.iglob(os.path.join(full_path, sentiment, '*.txt')):
+                with open(filename, 'r', encoding="utf-8") as f:
+                    text = f.readline()
+                examples.append({
+                    'text': text,
+                    'sentiment': sentiment,
+                })
+        ret.append(examples)
+
+    if len(ret) == 1:
+        return ret[0]
+    else:
+        return tuple(ret)
+
+train_data = imdb_dataset(train=True)
 
 ```
 
-Since the dataset is pre-processed so that each word is represented by an integer, we have to build a reverse dictionary if we want to actually read some of the reviews:
-
+```python
+len(train_data[0]['text'])
+```
 
 How do we build a predictor for this task?
 
 ```python
-model = Sequential()
 ...
 ```
