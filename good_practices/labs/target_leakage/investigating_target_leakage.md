@@ -207,26 +207,29 @@ Lastly, we assign to our labels (in this case the author of the tweets) one clas
 import numpy as np
 
 #Get rid of all retweets
-tweet_dataset = tweet_dataset[tweet_dataset["is_retweet"] == False]
-
-#Remove URLs
-tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'http\S+|www.\S+', '', case=False, regex=True)
-
-#Now let's make sure that non-alphanumeric characters are taken as single words
-tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', ' \\1 ', case=False, regex=True)
-
-#remove hashtags
-#tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'#[a-zA-Z0-9]*', '', case=False, regex=True)
-
-#remove @ mentions
-#tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'@[a-zA-Z0-9]*', '', case=False, regex=True)
+tweet_dataset_clean = tweet_dataset[tweet_dataset["is_retweet"] == False]
 
 #make all words lower case
-tweet_dataset["text"] = tweet_dataset["text"].str.lower()
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.lower()
+
+#Remove URLs
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'http\S+|www.\S+', '', case=False, regex=True)
+
+#remove hashtags
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'#[a-zA-Z0-9]+', '', case=False, regex=True)
+
+#remove @ mentions
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'@[a-zA-Z0-9]*', '', case=False, regex=True)
+
+#remove newlines
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'\n', '', case=False, regex=True)
+
+#Now let's make sure that non-alphanumeric characters are taken as single words
+#tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', ' \\1 ', case=False, regex=True)
 
 #split the tweets in list of words
-tweet_dataset["text"] = tweet_dataset["text"].str.strip()
-tweet_dataset["text"] = tweet_dataset["text"].str.split(" ")
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.strip()
+tweet_dataset_clean["text"] = tweet_dataset_clean["text"].str.split(r'\s+')
 
 #since the neural networks don't really like string inputs,
 #we have to convert each word to a unique integer.
@@ -238,34 +241,28 @@ word_dict[0] = "padding"
 
 #assign a unique integer to each unique word
 count = 1
-for index, row in tweet_dataset.iterrows():
+for index, row in tweet_dataset_clean.iterrows():
     for element in row["text"]:
         if element not in integer_dict.keys():
-
             integer_dict[element] = count
             word_dict[count] = element
             count += 1
     
-tweet_dataset["numbers"] = tweet_dataset["text"].apply(lambda x:[integer_dict[y] for y in x])
+tweet_dataset_clean["numbers"] = tweet_dataset_clean["text"].apply(lambda x:[integer_dict[y] for y in x])
 
 #Let's also assign integer labels 
-tweet_dataset.loc[tweet_dataset["handle"] == "realDonaldTrump","label"] = 1
-tweet_dataset.loc[tweet_dataset["handle"] == "HillaryClinton","label"] = 0
+tweet_dataset_clean.loc[tweet_dataset_clean["handle"] == "realDonaldTrump","label"] = 1
+tweet_dataset_clean.loc[tweet_dataset_clean["handle"] == "HillaryClinton","label"] = 0
 
 #The longest tweet has 58 words, this will add padding to shorter tweets
-x = pd.DataFrame(tweet_dataset["numbers"].values.tolist()).values
+x = pd.DataFrame(tweet_dataset_clean["numbers"].values.tolist()).values
 x[np.where(np.isnan(x[:]))] = 0
 
-y = np.array(tweet_dataset["label"])
+y = np.array(tweet_dataset_clean["label"])
 
 ```
 
 Check the effect that this has had on the first tweet:
-
-```python editable=true slideshow={"slide_type": ""}
-tweet_dataset["text"][0]
-#x[0]
-```
 
 <!-- #region editable=true slideshow={"slide_type": ""} -->
 Now, we will see how we can use Embeddings to transform our dictionary of words into a dictionary of float vectors.
@@ -282,21 +279,21 @@ class Model(nn.Module):
         self.sequence_length = sequence_length
         embed_size = 8
         bidir_size = 4
-        fc_size = 16
+        fc_size = 4
         n_classes = 2
 
         self.embedding = nn.Embedding(self.vocabulary_size, embed_size)
 
         if convolutional:
-            self.conv1 = nn.Conv1d(embed_size, 32, kernel_size=7)
-            self.conv2 = nn.Conv1d(32, 16, kernel_size=5)
-            self.conv3 = nn.Conv1d(16, 8, kernel_size=3)
+            self.conv1 = nn.Conv1d(embed_size, 4, kernel_size=7)
+            self.conv2 = nn.Conv1d(4, 8, kernel_size=5)
+            self.conv3 = nn.Conv1d(8, 8, kernel_size=3)
 
             flat_size = (self.sequence_length  - 12) * 8
         else:
             self.lstm = nn.LSTM(embed_size, bidir_size,
-                                batch_first=True, bidirectional=True)
-            flat_size = self.sequence_length  * bidir_size * 2
+                                batch_first=True, bidirectional=False)
+            flat_size = self.sequence_length  * bidir_size
 
         self.fc1 = nn.Linear(flat_size, fc_size)
         self.fc2 = nn.Linear(fc_size, n_classes)
@@ -395,7 +392,7 @@ Can you think of a good dataset that you could use to test your model?
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-tweet = "crooked hillary sad"
+tweet = "crooked hillary sad !"
 tweet = tweet.lower()
 words = tweet.split(" ")
 
@@ -427,35 +424,19 @@ How do we convert these predicted values into probabilities?
 Now let's visualize the outputs of the embedding layer. We extract the embedding layer from the trained model and we use it to calculate embeddings for every word in our dictionary. Then, we map the 32-dimensional output vector onto 2 dimensions with the help of principal component analysis (PCA).
 
 ```python editable=true slideshow={"slide_type": ""}
-network_layers = [p for p in model.parameters()]
-embedding_layer_w = network_layers[0]
-embedding_layer_w = embedding_layer_w.detach().numpy()
-print(embedding_layer_w.shape)
-```
-
-```python editable=true slideshow={"slide_type": ""}
-integer_dict["→"]
-```
-
-```python editable=true slideshow={"slide_type": ""}
-points_pca[177]
-```
-
-```python editable=true slideshow={"slide_type": ""}
 from sklearn.decomposition import PCA
 
 n_words = 1000
 words = torch.tensor(np.arange(n_words)[None, :])
 embedded_words = np.squeeze(model.embedding(words).cpu().detach().numpy())
 
-pca = PCA(n_components=2)
+pca = PCA(n_components=8)
 points_pca = pca.fit_transform(embedded_words)
-
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
 import plotly.express as px
-fig = px.scatter(x=points_pca[:,0], y=points_pca[:,1], text=[word_dict[i] if i < 1000 else "" for i in range(n_words)], width=2400, height=800)
+fig = px.scatter(x=points_pca[:,0], y=points_tsne[:,1], text=[word_dict[i] if i < 1000 else "" for i in range(n_words)], width=2400, height=800)
 fig.update_traces(textposition='top center')
 fig.show()
 ```
@@ -474,22 +455,12 @@ fig.show()
 
 Here are a few examples of how the dataset can be manipulated. Try these lines of code (and come up with some others!) by pasting them in the right place the code block where the dataset is loaded (second code cell):
 
-<!-- #region -->
+<!-- #region editable=true slideshow={"slide_type": ""} -->
 ```python
-#Get rid of all retweets
-tweet_dataset = tweet_dataset[tweet_dataset["is_retweet"] == False]
-
-#Next, let's remove all URLs, since they should not be of any help (unless we actually checked what they link to)
-tweet_dataset["text"] = tweet_dataset["text"].str.replace('http\S+|www.\S+', '', case=False)
-
-#remove hashtags
-tweet_dataset["text"] = tweet_dataset["text"].str.replace('#[a-zA-Z0-9]*', '', case=False)
-
 #Remove a word
 tweet_dataset["text"] = tweet_dataset["text"].str.replace('crooked', '', case=False)
 
 #Remove non-alphanumeric characters
-tweet_dataset["text"] = tweet_dataset["text"].str.replace('\s*([^a-zA-Z0-9 ])\s*', '', case=False)
-
+tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', '', case=False, regex=True)
 ```
 <!-- #endregion -->
