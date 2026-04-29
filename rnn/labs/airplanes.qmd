@@ -19,8 +19,6 @@ description: Airplanes lab
 notebook-url: "[airplanes.ipynb](rnn/labs/airplanes.ipynb)"
 ---
 
-<!-- -->
-
 ```{python }
 
 ```

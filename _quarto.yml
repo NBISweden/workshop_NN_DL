@@ -38,6 +38,7 @@ execute:
   echo: true
   warning: false
   cache: true
+  output: true
   include: true
   autodep: true
   eval: false
