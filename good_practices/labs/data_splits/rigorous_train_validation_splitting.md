@@ -38,7 +38,11 @@ for each letter in the sequence, we want to make a classification in the three c
 I have prepared a dataset where all protein sequences have been pre-split into windows of 31 amino acids. We want to predict the class for the amino acid in the center of the window, like so:
 
 
-predict("MKLFLILLVLPLASCF<font color="red">F</font>TCNSNANLSMLQLG") -> [p(H), p(S), p(C)]
+predict("MKLFLILLVLPLASC<font color="red">F</font>FTCNSNANLSMLQLG") -> [p(H), p(S), p(C)]
+
+If we want to predict for the first amino acid in the sequence, we can pad the window on the left side, e.g.:
+
+predict("- - - - - - - - - - - - - - - <font color="red">M</font>KLFLILLVLPLASCF") -> [p(H), p(S), p(C)]
 
 Of course, a neural network will not accept a string input as it is, so we will have to deal with this by converting each letter in our alphabet into an integer. Then, we will use word embeddings to translate the integers into vectors of floating points.
 
@@ -85,20 +89,22 @@ Now let's load libraries and plotting functions:
 ```python editable=true id="sSo9dHhgXNVD"
 import pickle
 import random
-import numpy as np
-import pandas as pd
 import sys
-from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
-from scipy.spatial.distance import squareform
 from typing import Optional
+
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.io as pio
 
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset
 import torchmetrics
+
+import numpy as np
+import pandas as pd
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from scipy.spatial.distance import squareform
 
 class LivePlot():
     def __init__(self):
@@ -349,7 +355,6 @@ In the dendrogram below we can see how proteins group together at various distan
 <!-- #endregion -->
 
 ```python editable=true colab={"base_uri": "https://localhost:8080/", "height": 680} id="ZOtFX2TPXNVM" outputId="5f634eae-ab5a-4ba7-fdb0-e51c9c2d765d"
-import matplotlib.pyplot as plt
 sys.setrecursionlimit(100000) #fixes issue with scipy and recursion limit
 plt.rcParams['figure.figsize'] = [12, 8]
 plt.rcParams['figure.dpi'] = 100
