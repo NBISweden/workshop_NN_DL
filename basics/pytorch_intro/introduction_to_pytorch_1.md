@@ -21,7 +21,7 @@ jupyter:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Introduction
+## Introduction
 
 * PyTorch is an end-to-end open source platform for ML 
 * Allows to easily build and deploy ML powered applications.
@@ -31,8 +31,8 @@ jupyter:
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# PyTorch
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+# What is PyTorch?
 
 * PyTorch is an "optimized tensor library for deep learning"
 * Scientific computing, general ML, Neural Networks
@@ -40,8 +40,8 @@ jupyter:
 * Easy to implement complex architectures with few lines of code
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Docs: https://docs.pytorch.org/docs
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Docs: https://docs.pytorch.org/docs
 
 * Installation instructions (you should be already set up!)
 * Tutorials from the groud up
@@ -53,7 +53,7 @@ jupyter:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Other ML/DL libraries
+## Other ML/DL libraries
 
 * Tensorflow
 * Keras*
@@ -63,8 +63,8 @@ jupyter:
 * Most concepts translate across libraries with minor differences
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Some terminology
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+# Basic terminology
 
 * A dataset in supervised learning is made of a number of (features, label) pairs
 * Example, a dataset of diabetic patients is made of:
@@ -76,7 +76,7 @@ jupyter:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# What is a tensor
+## What is a tensor
 
 The main variables in PyTorch are tensors:
 
@@ -88,7 +88,7 @@ The main variables in PyTorch are tensors:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# PyTorch operates on tensors
+## PyTorch operates on tensors
 
 > Tensors are a specialized data structure that are very similar to arrays and matrices. In PyTorch, we use tensors to encode the inputs and outputs of a model, as well as the model’s parameters.
 > 
@@ -97,8 +97,8 @@ The main variables in PyTorch are tensors:
 > Src: https://docs.pytorch.org/tutorials/beginner/basics/tensorqs_tutorial.html
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# The first step is to build a graph of operations
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## The first step is to build a graph of operations
 
 * NNs are defined in PyTorch as graphs through which the data flows until the final result is produced
 * Before we can do any operation on our data (images, etc) we need to build the graph of tensor operations
@@ -108,16 +108,17 @@ The main variables in PyTorch are tensors:
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Tensors and data are *not* the same thing
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Tensors and data are *not* the same thing
+
 * Tensors are, rather, a symbolic representation of the data
 * Think about the function $g = f(x)$: as long as we do not assign a value to $x$, we will not have a fully computed $g$
 * In this case, $g$ is the output tensor, $x$ the input tensor, $f$ the tensor operation (a Neural Network?)
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Example
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Example
 
 * We have a set of color images of size $1000x1000$ pixels (1 megapixel) that we want to use on our NN 
 * We define tensors with shape $(n, 1000, 1000, 3)$
@@ -127,8 +128,8 @@ The main variables in PyTorch are tensors:
     * Grayscale images tensors would have shape $(n, 1000, 1000, 1)$
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# One thing to remember when operating on tensors
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## One thing to remember when operating on tensors
 
 The dimensions between tensors coming out of the $i$-th node and those going into the $(i+1)$-th node *must* match:
 
@@ -137,8 +138,8 @@ The dimensions between tensors coming out of the $i$-th node and those going int
 * Check the documentation to make sure what input-output shapes are allowed ([example](https://docs.pytorch.org/docs/stable/generated/torch.nn.Conv1d.html))
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Here's how a NN layer might look like in PyTorch:
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## Here's how a NN layer might look like in PyTorch:
 
 * 7 samples in batch
 * 784 inputs
@@ -149,7 +150,7 @@ The dimensions between tensors coming out of the $i$-th node and those going int
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Here is how a model is built and trained
+# Building and training models with PyTorch
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "-"} editable=true -->
@@ -185,7 +186,7 @@ for features, label in dataset:
 What does each bit do?
 
 <!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
-# A neural network in PyTorch is called a Model
+## A neural network in PyTorch is called a Model
 
 The simplest kind of model is of the Sequential kind:
 <!-- #endregion -->
@@ -204,7 +205,7 @@ This is an "empty" model, with no layers, no inputs or outputs are defined eithe
 <!-- #endregion -->
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# A neural network in PyTorch is called a Model
+## A neural network in PyTorch is called a Model
 
 Adding layer is easy. Let's say we have data for participants to a clinical study. For participant we have recorded: blood pressure, BMI and age.
 
@@ -226,12 +227,12 @@ model.append(nn.Softmax())
 A "Dense" layer is a fully connected layer as the ones we have seen in Multi-layer Perceptrons.
 The above is equal to having this network:
 
-<center><img src="figures/simplenet_patient.png"></center>
+<center><img src="figures/simplenet_patient.png" width=750></center>
 
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# A neural network in PyTorch is called a Model
+## A neural network in PyTorch is called a Model
 
 If we want to see the layers in the Model this far, we can just call:
 <!-- #endregion -->
@@ -269,7 +270,7 @@ model
 ```
 
 <!-- #region editable=true slideshow={"slide_type": ""} -->
-# Small exercise
+# Lab 1
 
 * Can you write code to build a simple NN model?
 * Open the `exercises` jupyter notebook
@@ -291,14 +292,14 @@ Common layers (we will cover most of these!)
     * <font color='red'>Dropout</font>
     * <font color='red'>Flatten</font>
     * BatchNormalization
-    * MaxPooling1D (2D/3D)
+    * <font color='red'>MaxPooling1D (2D/3D)</font>
     * Merge (add/subtract/concatenate)
     * <font color='red'>Activation (Softmax/ReLU/Sigmoid/...)</font>
 
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# More things needed to train the model
+# Losses and Optimizers
 
 Once we have defined a model we need to at least define:
 
@@ -312,7 +313,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.01)
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Losses (https://docs.pytorch.org/docs/stable/nn.html#loss-functions)
+## Losses (https://docs.pytorch.org/docs/stable/nn.html#loss-functions)
 
 These are the functions used to evaluate and train the neural network. Different losses are suited for different problems.
 
@@ -333,7 +334,7 @@ A loss function is also called a `criterion` in pytorch code
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Metrics (https://lightning.ai/docs/torchmetrics/stable/)
+## Metrics (https://lightning.ai/docs/torchmetrics/stable/)
 
 Common metrics for classification:
 
@@ -348,7 +349,7 @@ Common metrics for regression:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Metrics (https://lightning.ai/docs/torchmetrics/stable/)
+## Metrics (https://lightning.ai/docs/torchmetrics/stable/)
 
 * While a Loss function can tell us how the training is going, these measures are not always intuitive
 * We sometimes what to have measures such as:
@@ -370,7 +371,7 @@ metric(preds, target)
 ```
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers (https://docs.pytorch.org/docs/stable/optim.html)
+## Optimizers (https://docs.pytorch.org/docs/stable/optim.html)
 
 * They are algorithms for gradient descent
 * A few to choose from:
@@ -387,7 +388,7 @@ metric(preds, target)
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-# Gradient Descent 
+# A refresher on Gradient Descent 
 
 We have seen how gradient descent works:
 
@@ -411,7 +412,7 @@ Pros/cons:
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-# Stochastic Gradient Descent
+## Stochastic Gradient Descent
 For each epoch:
 
 * Divide data in batch blocks of size $n < N$
@@ -437,14 +438,14 @@ Pros/cons:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers
+# Learning rates
 
 We need to choose a learning rate to multiply to our gradient. If it is too small, we risk taking too long to get to a minimum
 <center><img src="figures/small_lr.png"  width="750"></center>
 <!-- #endregion -->
 
 <!-- #region hideOutput=true slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers
+## Learning rates
 
 If it is too large, the network risks becoming unstable, explode
 
@@ -454,7 +455,7 @@ Let's test different optimization strategies on Tensorflow playground: http://pl
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers
+## Learning rates
 
 Luckily there are algorithms to address these issues:
 
@@ -473,7 +474,7 @@ Luckily there are algorithms to address these issues:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers
+# Common Optimizers
 
 * They implement algorithms for gradient descent
 * A few to choose from:
@@ -491,7 +492,7 @@ Luckily there are algorithms to address these issues:
 <!-- #endregion -->
 
 <!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
-# Optimizers
+## Common Optimizers
 <br>
 <br>
 <center><img src="figures/adam_et_al.png" width=500></center>
@@ -523,7 +524,7 @@ for batch in dataset:
 <!-- #endregion -->
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Training the model, more in detail
+## Training the model, more in detail
 
 In reality, there are a few more things to keep track of. Here is a more complete version of a training loop:
 <!-- #endregion -->
@@ -553,7 +554,7 @@ for epoch in range(max_epochs):
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Training the model, more in detail
+## Training the model, more in detail
 
 * Let's not forget the actual data!
 * First, we define a `Dataset` as a set of tensor features and labels
@@ -595,7 +596,7 @@ for epoch in range(max_epochs):
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# What is this validation thing? Do I really need it?
+## What is this validation thing? Do I really need it?
 
 * If it works well on training set but not on validation set, you're overfitting
 * Validation (or development) data is used to adapt hyperparameters, select best models
@@ -626,7 +627,7 @@ print(np.hstack((data[0:10,:], labels[..., None][0:10])))
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# We have the data. Now we make the model, train it
+## We have the data. Now we make the model, train it
 
 * Batch size is 32, 10 epochs
 * Take 10% of the data, reserve it for validation
@@ -700,7 +701,7 @@ for epoch in range(max_epochs):
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Let's visualize our training curves
+## Let's visualize our training curves
 
 * Plots loss and accuracy for train and validation sets separately
 
@@ -757,7 +758,7 @@ class LivePlot():
 ```
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Cleaning up the code a bit
+## Cleaning up the code a bit
 
 We move the training loop into its own function:
 <!-- #endregion -->
@@ -817,7 +818,7 @@ def train(*,
 ```
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Cleaning up the code a bit
+## Cleaning up the code a bit
 
 Then, we make the model into a `torch.nn.Module` class:
 <!-- #endregion -->
@@ -837,7 +838,7 @@ class MLP(torch.nn.Module):
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Let's train and visualize our training curves
+## Let's train and visualize our training curves
 
 * Plots loss and accuracy for train and validation sets separately
 * Did the model learn anything? Why?
@@ -870,7 +871,7 @@ train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=o
 <!-- #endregion -->
 
 <!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
-# Do it again, but with data that actually means something
+## Do it again, but with data that actually means something
 
 Let's generate data that is not just binary, but behaves like it:
 
@@ -892,7 +893,7 @@ for x in range(3):
 ```
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Can we classify the labels with a linear method?
+## Can we classify the labels with a linear method?
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -905,7 +906,7 @@ plt.scatter(transformed[:,0], transformed[:,1], c=xor_labels)
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Let's fit a NN model to the data:
+## Let's fit a NN model to the data:
 <!-- #endregion -->
 
 ```python
@@ -935,7 +936,7 @@ train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=o
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# XOR data: results
+## XOR data: results
 
 * Better than random!
 * Notice the difference between train and validation curves
