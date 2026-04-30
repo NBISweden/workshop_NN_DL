@@ -1,4 +1,11 @@
 ---
+title: "Programming and training Neural Networks with PyTorch"
+autor:
+    - Claudio Mirabello
+format:
+  nbis-quarto-revealjs:
+    footer: "Intro to NN, pt. 1"
+description: First NNs with PyTorch
 jupyter:
   jupytext:
     formats: ipynb,md
@@ -12,6 +19,7 @@ jupyter:
     language: python
     name: python3
 ---
+
 
 <!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
 # Programming and training Neural Networks with PyTorch
