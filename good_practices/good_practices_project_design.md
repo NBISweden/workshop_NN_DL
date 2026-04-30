@@ -49,10 +49,10 @@ jupyter:
 * Use linear modelling as a baseline before you move to non-linear methods?
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
 ## Real-life example
 
-Drop-in question: "I tried deep learning on my data and it didn't perform better than this other simpler method"
+Question from group leader: "I tried deep learning on my data and it didn't perform better than this other simpler method"
 
 * Classifying gene expression samples
 * Thousands features
@@ -61,7 +61,7 @@ Drop-in question: "I tried deep learning on my data and it didn't perform better
 * NN looked like this:
 <!-- #endregion -->
 
-```python cell_style="split" slideshow={"slide_type": "-"} editable=true
+```python
 import torch.nn as nn
 import numpy as np
 
@@ -136,7 +136,7 @@ And therein lies the main issue:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## 1) Neural Nets are very good at detecting patterns and they will use this against you
+# Neural Nets are very good at detecting patterns and they will use this against you
 
 ### (a.k.a. target leakage)
 <!-- #endregion -->
@@ -150,7 +150,7 @@ And therein lies the main issue:
     * But one of the features is "monthly income"
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Example: detecting COVID-19 from chest scans 
 (https://www.datarobot.com/blog/identifying-leakage-in-computer-vision-on-medical-images/)
 
@@ -174,7 +174,8 @@ Inspecting dataset with image embeddings tells another story: can anyone tell wh
 ## Example: detecting COVID-19 from chest scans 
 
 Let's look at activations map and see more in detail
-* Get final layer's output after activation (ReLU) and plot figure
+
+* Get final layer's output after activation (ReLU) and plot back on input
 
 <img src="figures/covidchest2.png"></img>
 [(source)](https://www.datarobot.com/blog/identifying-leakage-in-computer-vision-on-medical-images/)
@@ -187,7 +188,7 @@ Let's look at activations map and see more in detail
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## Lab 1: looking for target leakage in a text dataset (~1 h.)
+# Lab: looking for target leakage in a text dataset (~1 h.)
 
 Jupyter notebook (download from canvas module page)
 
@@ -199,7 +200,7 @@ Visualize the layers of a NN for Natural Language Processing:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## 2) Know your train/validation/test sets
+# Know your train/validation/test sets
 
 * A _train set_ is a set of samples used to tune the NN weights
 * A _validation set_ is a set used to tune the NN hyperparameters:
@@ -215,14 +216,12 @@ Visualize the layers of a NN for Natural Language Processing:
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-### Beware of similar samples across sets
+## Beware of similar samples across sets
 
 <img src="figures/homer.png" width=500>
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
-<br>
-<br>
 <img src="figures/guyincognito.png">
 (2F08 “Fear of Flying”)
 <!-- #endregion -->
@@ -241,23 +240,26 @@ Train, validation and test sets cannot be too similar to each other, or you will
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
+## Another imaging example
+
 <img src="figures/andrewng.png">
 <!-- #endregion -->
 
 <!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
+## Another imaging example
+
 <img src="figures/trainvalidationleak1.png">
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
-<img src="figures/andrewng.png">
-<!-- #endregion -->
-
 <!-- #region cell_style="split" slideshow={"slide_type": "-"} editable=true -->
+## Another imaging example
+
 <img src="figures/trainvalidationleak.png">
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Sad ending :(
+## Sad ending :(
+
 <img src="figures/trainvalidationleak2.png">
 <!-- #endregion -->
 
@@ -274,12 +276,12 @@ Train, validation and test sets cannot be too similar to each other, or you will
 <img src="figures/25percent.png">
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Lab 2: splitting a protein sequence dataset (~1 h.)
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+# Lab: splitting a protein sequence dataset (~1 h.)
 
 Jupyter notebook:
 
-session_goodPracticesDatasetDesign/lab_validation/rigorous_train_validation_splitting.ipynb
+`good_practices/labs/data_splits//rigorous_train_validation_splitting.ipynb`
 
 Two different strategies will be tested:
 * Random split
@@ -289,7 +291,7 @@ Which works best? Different groups test different networks on each strategy
 <!-- #endregion -->
 
 <!-- #region cell_style="center" slideshow={"slide_type": "skip"} editable=true -->
-## 3) Your model is only as good as your data 
+# Your model is only as good as your data 
 
 Reasons why one of my networks wouldn't work:
 
@@ -327,8 +329,8 @@ They will "kind of" work even when some labels are incorrect, but it is going to
 <img src="figures/monk.jpg" width=400>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "skip"} -->
-## Ok, my data is perfect but I don't have enough of it: what now?
+<!-- #region slideshow={"slide_type": "skip"} editable=true -->
+# My data is perfect but I don't have enough of it: what now?
 
 Main avenues:
 * Find more of it
@@ -365,8 +367,8 @@ Main avenues:
 * As usual, do this only on training data
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "skip"} -->
-## Regularizers (https://keras.io/api/layers/regularizers/)
+<!-- #region slideshow={"slide_type": "skip"} editable=true -->
+## Regularizers
 
 You thought we were done with Keras api explanations, but we ain't
 
@@ -381,7 +383,7 @@ You thought we were done with Keras api explanations, but we ain't
 * Let's have a look on [tensorflow playground](http://playground.tensorflow.org)!
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "skip"} editable=true
+```python editable=true slideshow={"slide_type": ""}
 def train(data_loader):
     for x, y in data_loader:
         y_hat = model(x)
