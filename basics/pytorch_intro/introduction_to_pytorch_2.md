@@ -20,11 +20,11 @@ jupyter:
 <center><img src="figures/pytorch_logo.png"></center>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Summary of first part
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+# Summary of first part
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Terminology
 
 * A dataset in supervised learning is made of a number of (features, label) pairs
@@ -36,7 +36,7 @@ jupyter:
 * Labels are compared to the NN's _outputs_ to see how well the network is doing compared to the truth
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Docs: https://docs.pytorch.org/docs
 
 * PyTorch is an "optimized tensor library for deep learning"
@@ -61,7 +61,7 @@ jupyter:
 The simplest kind of model is of the Sequential kind:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"}
+```python editable=true slideshow={"slide_type": ""}
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -75,7 +75,7 @@ This is an "empty" model, with no layers, no inputs or outputs are defined eithe
 Adding layer is easy:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"}
+```python editable=true slideshow={"slide_type": ""}
 model = nn.Sequential()
 model.append(nn.Linear(3, 4))
 model.append(nn.ReLU())
@@ -94,12 +94,12 @@ The above is equal to having this network:
 If we want to see the layers in the Model this far, we can just call:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python
 list(model.parameters())
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## Part 2, more layers (https://docs.pytorch.org/docs/stable/nn.html)
+# More layers (https://docs.pytorch.org/docs/stable/nn.html)
 
 Common layers (we will cover most of these!)
 
@@ -119,7 +119,7 @@ Common layers (we will cover most of these!)
     * <font color='red'>Activation (Softmax/ReLU/Sigmoid/...)</font>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Dropout is a regularization layer
 
 * It's applied to a previous layer's output
@@ -128,7 +128,7 @@ Common layers (we will cover most of these!)
 * if p = 0.5: `model.append(nn.Dropout(p=0.5))`
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python
 input = torch.randn(16)
 
 dropout_layer = nn.Dropout(p=0.5)
@@ -139,7 +139,7 @@ print("Before:", input, sep="\n")
 print("After:", output, sep="\n")
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Dropout is a regularization layer
 
 * Applying the same input twice will give different results
@@ -149,7 +149,7 @@ print("After:", output, sep="\n")
 * Active only at training time
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python
 print("Input:", input, sep="\n")
 dropout_layer.train()
 output = dropout_layer(input)
@@ -161,7 +161,7 @@ output = dropout_layer(input)
 print("Output (validation time):", output, sep="\n")
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Custom layers
 
 * It's not mandatory to use predefined pyTorch layers
@@ -169,7 +169,7 @@ print("Output (validation time):", output, sep="\n")
 * Just make sure the function is differentiable
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"}
+```python
 def sum_two_tensors(inputs):
     x, y = inputs
     sum_of_tensors = x + y
@@ -205,10 +205,11 @@ loss = criterion(lambda_out, desired_out)
 loss.backward()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Activations (https://docs.pytorch.org/docs/stable/nn.functional.html#non-linear-activation-functions)
 
 Activation functions for regression or inner layers:
+
 * Sigmoid
 * Tanh
 * ReLU
@@ -216,6 +217,7 @@ Activation functions for regression or inner layers:
 * Linear (None)
 
 THE activation function for classification (output layer only):
+
 * Softmax (ouputs probabilities for each class)
 * But Softmax is usually calculated inside the Loss function
 <!-- #endregion -->
@@ -242,7 +244,7 @@ Softmax is usually only used to activate the last layer of a NN
 **In Torch, you generally never do: `model.append(nn.Softmax())`, as it is applied automatically inside the Loss function!**
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## ReLU vs. old-school logistic functions
 
 * Historically, sigmoid and tanh were the most used activation functions
@@ -250,40 +252,44 @@ Softmax is usually only used to activate the last layer of a NN
 * Bound outputs (ex: from 0 to 1)
 * They look like this:
 
+<br>
 <img src="figures/logistic_curve.png" width=400>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## ReLU vs. old-school logistic functions
 
 * Problems arise when we are at large $|x|$
 * The derivative in that area becomes small (saturation)
 * Remember what the chain rule said?
 
+<br>
 <img src="figures/logistic_curve.png" width=400>
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## ReLU vs. old-school logistic functions
 
 * When we have $n$ layers, we go through $n$ activation functions
 * At layer $n$ the derivative is proportional to:
+
 $$\begin{eqnarray} 
 \frac{\partial L(w,b|x)}{\partial w_{ln}} & \propto &  \frac{\partial a_{ln}}{\partial z_{ln}}
 \end{eqnarray}$$
+
 * At layer 1 the derivative is proportional to:
+  
 $$\begin{eqnarray} 
 \frac{\partial L(w,b|x)}{\partial w_{l1}} & \propto &  \frac{\partial a_{ln}}{\partial z_{ln}} \times \frac{\partial a_{n-1}}{\partial z_{ln-1}} \times \frac{\partial a_{ln-2}}{\partial z_{ln-2}} \ldots \times \frac{\partial a_{l1}}{\partial z_{l1}}
 \end{eqnarray}$$
+
 * It is the product of many numbers $< 1$
 * Gradient becomes smaller and smaller for the initial layers
 * Gradient vanishing problem
-
-<!--- <img src="figures/large_net.png" width=400> -->
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## ReLU is the first activation to address the issue
 
 <center><img src="figures/relu.png" width=400></center>
@@ -291,21 +297,24 @@ $$\begin{eqnarray}
 Used in "internal" layers, usually not at last layer
 
 Pros:
+
 * Easy derivative (1 for x > 0, 0 elsewhere)
 * Derivative doesn't saturate for x > 0: alleviates gradient vanishing
 * Non-linear
 
 Cons:
+
 * Non-derivable at 0
 * Dead neurons if x << 0 for all data instances
 * Potential gradient explosion
 * Let's try this on Tensorflow playground: http://playground.tensorflow.org
 <!-- #endregion -->
 
-<!-- #region cell_style="split" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="split" slideshow={"slide_type": "slide"} editable=true -->
 ## Other ReLU-like activations
 
 LeakyReLU/PReLU
+
 * y = $\alpha$x at x < 0
 * In PReLU $\alpha$ is learned
 
@@ -313,17 +322,18 @@ LeakyReLU/PReLU
 
 <!-- #endregion -->
 
-<!-- #region cell_style="split" -->
+<!-- #region cell_style="split" editable=true slideshow={"slide_type": ""} -->
 ## <font color="white">Other</font>
 
 ELU
+
 * Derivable at 0
 * Non-zero at x < 0
 
 <center><img src="figures/elu.png" width=400></center>
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "slide"}
+```python
 from IPython.display import IFrame 
 IFrame('https://polarisation.github.io/tfjs-activation-functions/', width=860, height=470) 
 ```
@@ -334,7 +344,7 @@ IFrame('https://polarisation.github.io/tfjs-activation-functions/', width=860, h
 We can add activations as separate layers:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 model = nn.Sequential()
 model.append(nn.Linear(3, 4))
 model.append(nn.ReLU())
@@ -343,7 +353,7 @@ model.append(nn.Softmax()) # usually not necessary to have this as last layer!
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## Even more layers
+# Even more layers
 
 * `Linear` is the classic FFNN where all nodes between layers are connected
 * Most of the other layers seen today are not trainable
@@ -430,7 +440,7 @@ nn.Embedding(num_embeddings, embedding_dim)
 * Same MLP as before, but layers are applied as functions
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -445,12 +455,12 @@ class MLP(torch.nn.Module):
 ```
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Functional models in Pytorch
+## Functional models in Pytorch
 
 * Now with multiple inputs and outputs
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 class ComplexModel(nn.Module):
     def __init__(self, num_words=100, embed_dim=64, lstm_dim1=128, lstm_dim2=32, tags_dim=12, output_dim1=1, output_dim2=4):
         super().__init__()
@@ -481,7 +491,7 @@ model = ComplexModel()
 ```
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-## Exercise 2/3 (reprise)
+# Exercise 2/3 (reprise)
 
 * Remember the XOR classifier? Or the Boston housing dataset?
 * Can you apply some of the things we have learned today on the models from yesterday?
