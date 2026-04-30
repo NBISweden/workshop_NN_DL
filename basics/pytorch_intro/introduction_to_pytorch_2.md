@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
-# Intro to programming and training Neural Networks with PyTorch, part 2
+# Programming and training Neural Networks with PyTorch, part 2
 
 
 <center><img src="figures/pytorch_logo.png"></center>
