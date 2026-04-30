@@ -1,0 +1,16 @@
+author: Claudio Mirabello
+format:
+  nbis-quarto-revealjs:
+    theme:
+      - default
+    text-align: left
+    center: false
+session: Basics
+knitr:
+  opts_chunk:
+    code-fold: false
+    tidy: true
+    comment-char: "#>"
+    fig-format: svg
+    engine.opts:
+      dvisvgm.opts: --font-format=woff
