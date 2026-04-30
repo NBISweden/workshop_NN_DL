@@ -20,7 +20,7 @@ jupyter:
 <center><img src="figures/pytorch_logo.png"></center>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Introduction
 
 * PyTorch is an end-to-end open source platform for ML 
@@ -73,7 +73,7 @@ jupyter:
 * Labels are compared to the NN's _outputs_ to see how well the network is doing compared to the truth
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## What is a tensor
 
 The main variables in PyTorch are tensors:
@@ -85,13 +85,7 @@ The main variables in PyTorch are tensors:
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## What is a tensor
-
-The main variables in TensorFlow are, of course, tensors:
-
-> A tensor is often thought of as a generalized matrix. That is, it could be a 1-D matrix (a vector), a 3-D matrix (something like a cube of numbers), even a 0-D matrix (a single number), or a higher dimensional structure that is harder to visualize. The dimension of the tensor is called its rank.
-
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## PyTorch operates on tensors
 
 > Tensors are a specialized data structure that are very similar to arrays and matrices. In PyTorch, we use tensors to encode the inputs and outputs of a model, as well as the model’s parameters.
@@ -152,11 +146,11 @@ The dimensions between tensors coming out of the $i$-th node and those going int
 
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Here is how a model is built and trained
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "-"} -->
+<!-- #region slideshow={"slide_type": "-"} editable=true -->
 
 ```python
 import torch
@@ -188,13 +182,13 @@ for features, label in dataset:
 
 What does each bit do?
 
-<!-- #region cell_style="center" slideshow={"slide_type": "slide"} -->
+<!-- #region cell_style="center" slideshow={"slide_type": "slide"} editable=true -->
 ## A neural network in PyTorch is called a Model
 
 The simplest kind of model is of the Sequential kind:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"} editable=true
+```python editable=true slideshow={"slide_type": ""}
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -203,8 +197,12 @@ model = nn.Sequential()
 print(list(model.parameters()))
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+<!-- #region slideshow={"slide_type": ""} editable=true -->
 This is an "empty" model, with no layers, no inputs or outputs are defined either.
+<!-- #endregion -->
+
+<!-- #region editable=true slideshow={"slide_type": "slide"} -->
+## A neural network in PyTorch is called a Model
 
 Adding layer is easy. Let's say we have data for participants to a clinical study. For participant we have recorded: blood pressure, BMI and age.
 
@@ -213,7 +211,7 @@ The participants have been diagnosed as healthy or sick, these will be our label
 We could define a simple NN that predicts if a participant is healthy or sick as follows:
 <!-- #endregion -->
 
-```python cell_style="center" slideshow={"slide_type": "-"} editable=true
+```python editable=true slideshow={"slide_type": ""}
 model = nn.Sequential()
 model.append(nn.Linear(3, 4))
 model.append(nn.ReLU())
@@ -231,18 +229,20 @@ The above is equal to having this network:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
+## A neural network in PyTorch is called a Model
+
 If we want to see the layers in the Model this far, we can just call:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python editable=true slideshow={"slide_type": ""}
 list(model.parameters())
 ```
 
-<!-- #region slideshow={"slide_type": "-"} -->
+<!-- #region slideshow={"slide_type": "-"} editable=true -->
 Notice the number of parameters, can you tell why there are this many?
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
 Using "model.append()" keeps stacking layers on top of what we have:
 <!-- #endregion -->
 
@@ -255,7 +255,7 @@ model
 One can also declare the model in one go, by passing a list of layers to Sequential() like so:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 model = nn.Sequential(
     nn.Linear(3, 4),
     nn.ReLU(),
@@ -304,7 +304,7 @@ Once we have defined a model we need to at least define:
 * an Optimizer (the algorithm that finds the minimum loss possible).
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 loss = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 ```
@@ -351,7 +351,7 @@ Common metrics for regression:
     * ...
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 from torch import tensor
 from torchmetrics.classification import BinaryAccuracy
 
@@ -608,7 +608,7 @@ for epoch in range(max_epochs):
 * Random data
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 import numpy as np
 
 # Generate dummy data
@@ -626,7 +626,7 @@ print(np.hstack((data[0:10,:], labels[..., None][0:10])))
 * Take 10% of the data, reserve it for validation
 <!-- #endregion -->
 
-```python slideshow={"slide_type": ""} editable=true
+```python
 from torch.utils.data import TensorDataset, DataLoader
 import torchmetrics
 
@@ -700,7 +700,7 @@ for epoch in range(max_epochs):
 
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 from typing import Optional
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -756,7 +756,7 @@ class LivePlot():
 We move the training loop into its own function:
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 def train(*,
           model: torch.nn.Module, 
           train_loader: DataLoader, 
@@ -814,7 +814,7 @@ def train(*,
 Then, we make the model into a `torch.nn.Module` class:
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -835,7 +835,7 @@ class MLP(torch.nn.Module):
 * The model didn't learn anything, which makes sense (data is random)
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 # Setup plot
 liveplot = LivePlot()
 
@@ -869,7 +869,7 @@ Let's generate data that is not just binary, but behaves like it:
 * -0.5 $\oplus$ 0.2 $\oplus$ -0.1 => 1
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 # Generate XOR data
 xor_data = np.random.random((10000, 3)) - 0.5
 xor_labels = np.zeros((10000))
@@ -881,7 +881,7 @@ for x in range(3):
     print("{0: .2f} xor {1: .2f} xor {2: .2f} equals {3:}".format(xor_data[x,0], xor_data[x,1], xor_data[x,2], xor_labels[x]))
 ```
 
-```python slideshow={"slide_type": "skip"} editable=true
+```python
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
@@ -894,7 +894,7 @@ plt.scatter(transformed[:,0], transformed[:,1], c=xor_labels)
 Now let's fit a model to the data:
 <!-- #endregion -->
 
-```python slideshow={"slide_type": "-"} editable=true
+```python
 dataset = TensorDataset(torch.tensor(xor_data, dtype=torch.float32), 
                         torch.tensor(xor_labels, dtype=torch.long))
 percentage_dev = 0.1
@@ -933,7 +933,7 @@ train(model=model, train_loader=train_loader, dev_loader=dev_loader, optimizer=o
 * Check the exercise notebook!
 <!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```python
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
