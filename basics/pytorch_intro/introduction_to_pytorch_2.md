@@ -323,7 +323,7 @@ LeakyReLU/PReLU
 <!-- #endregion -->
 
 <!-- #region cell_style="split" editable=true slideshow={"slide_type": ""} -->
-## <font color="white">Other</font>
+## Other ReLU-like activations
 
 ELU
 
@@ -333,7 +333,11 @@ ELU
 <center><img src="figures/elu.png" width=400></center>
 <!-- #endregion -->
 
-```python
+<!-- #region editable=true slideshow={"slide_type": "slide"} -->
+## Visualizing common activations
+<!-- #endregion -->
+
+```python editable=true slideshow={"slide_type": ""}
 from IPython.display import IFrame 
 IFrame('https://polarisation.github.io/tfjs-activation-functions/', width=860, height=470) 
 ```
@@ -424,8 +428,8 @@ nn.Embedding(num_embeddings, embedding_dim)
 <img src=figures/aa_embed.png></img>
 <!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Functional models in PyTorch
+<!-- #region slideshow={"slide_type": "slide"} editable=true -->
+# Functional models in PyTorch
 
 * Sequential() is quite simple, but limited
 * What if we want to have multiple input/output layers?
@@ -435,7 +439,7 @@ nn.Embedding(num_embeddings, embedding_dim)
 <!-- #endregion -->
 
 <!-- #region editable=true slideshow={"slide_type": "slide"} -->
-# Functional models in Pytorch
+## Functional models in Pytorch
 
 * Same MLP as before, but layers are applied as functions
 <!-- #endregion -->
