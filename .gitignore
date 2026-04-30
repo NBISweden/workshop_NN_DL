@@ -216,6 +216,7 @@ __marimo__/
 *.odp
 *.pic
 *.tsv
+*.zip
 
 /.quarto/
 **/*.quarto_ipynb
