@@ -1,0 +1,36 @@
+/*-- scss:defaults --*/
+$presentation-slide-text-align: center !default;
+
+span.citation {
+    font-size: 0.7em;
+    float: right;
+    margin-left: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-left: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+
+}
+
+.twocolgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-row-gap: 0px;
+    align-items: start;
+    justify-items: stretch; // Make sure images occupy entire area?
+}
+
+.threecolgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-row-gap: 0px;
+    //align-items: center;
+    justify-items: stretch; // Make sure images occupy entire area?
+}
+
+.fourcolgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 0px;
+}

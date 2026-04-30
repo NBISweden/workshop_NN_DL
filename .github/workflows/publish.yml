@@ -1,0 +1,61 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+      - rnn
+    pull_request:
+      branches:
+        - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pixi environment
+        uses: prefix-dev/setup-pixi@v0.9.5
+        with:
+          environments: teachers
+          pixi-version: v0.66.0
+
+      - name: Install Quarto extensions
+        run: |
+          pixi run -e teachers quarto add --no-prompt percyfal/nbis-quarto-revealjs
+
+      - name: Install TeXLive
+        run: |
+          sudo apt-get update
+          sudo apt-get install texlive texlive-latex-extra
+
+      - run: echo "TEXINPUTS=$TEXINPUTS:$GITHUB_WORKSPACE/rnn" >> $GITHUB_ENV
+
+      - name: Render Quarto pages
+        run: |
+          pixi run render
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site  
+          
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

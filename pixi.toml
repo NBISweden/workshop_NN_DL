@@ -14,6 +14,7 @@ pip = ">=26.0.1,<27"
 jupyter = ">=1.1.1, <2"
 matplotlib = ">=3.10.8, <4"
 segmentation-models-pytorch = "*"
+nbformat = ">=5.10.4, <6"
 
 # Default (CPU / generic) torch — used by teachers and basics environments
 [feature.torch.pypi-dependencies]
@@ -77,12 +78,36 @@ r-devtools = ">=2.5.0,<3"
 
 [environments]
 default = ["torch", "pythonlibs"]
-teachers = ["torch", "quarto", "pythonlibs"]
-basics = ["torch", "rise-jupyter"]
+quarto = ["quarto"]
+teachers = ["torch", "quarto", "pythonlibs", "rlibs"]
+basics = ["torch", "rise-jupyter", "quarto", "pythonlibs"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
-rnn = ["quarto", "rise-jupyter", "pythonlibs", "torch", "rlibs"]
+rnn = ["quarto", "pythonlibs", "torch", "rlibs"]
 
-[tasks]
-test = "python -c 'import torch; print(torch.cuda.is_available())'"
-jupyter-lab = "jupyter lab --no-browser"
- 
+[tasks.render_all]
+cmd = "bash scripts/render.sh --profile all --to html"
+default-environment = "teachers"
+
+[tasks.sync_sitelibs]
+cmd = "cp -r _site/site_libs _site_libs_backup"
+default-environment = "teachers"
+depends-on = ["render_all"]
+
+[tasks.render_ipynb]
+cmd = "bash scripts/render.sh --profile ipynb --to ipynb --no-clean"
+default-environment="teachers"
+depends-on = ["sync_sitelibs"]
+
+[tasks.render_revealjs]
+cmd = "bash scripts/render.sh --profile revealjs --no-clean"
+default-environment = "teachers"
+depends-on = ["render_ipynb"]
+
+[tasks.render]
+cmd = "rsync -av _site_libs_backup/ _site/site_libs/ && rm -rf _site_libs_backup"
+default-environment = "teachers"
+depends-on = ["render_revealjs"]
+
+[tasks.render_labs]
+cmd = "sh ./scripts/render_labs.sh"
+default-environment="quarto"

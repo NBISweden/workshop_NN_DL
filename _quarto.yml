@@ -1,0 +1,48 @@
+# -*- yaml -*-
+project:
+  type: website
+  output-dir: _site
+
+institute: NBIS
+format:
+  html:
+    format-links: false
+  nbis-quarto-revealjs:
+    theme:
+      - default
+    date: last-modified
+    date-format: "DD-MMM-YYYY"
+    embed-resources: false
+    code-line-numbers: false
+    center: false
+    toc: true
+    toc-depth: 1
+    slide-level: 2
+    slide-number: true
+    preview-links: true
+    chalkboard: false
+    smaller: true
+    highlight-style: gruvbox
+    fig-height: 12
+    fig-width: 10
+    fig-align: center
+    text-align: left
+    width: 1280
+    height: 720
+    margin: 0.1
+    navigation-mode: vertical
+    reference-location: margin
+    ultitle: true
+
+execute:
+  echo: true
+  warning: false
+  cache: true
+  output: true
+  include: true
+  autodep: true
+  eval: false
+  error: true
+
+extensions:
+  - nbis-quarto
