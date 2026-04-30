@@ -109,5 +109,5 @@ default-environment = "teachers"
 depends-on = ["render_revealjs"]
 
 [tasks.render_labs]
-cmd = "sh ./render_labs.sh"
+cmd = "sh ./scripts/render_labs.sh"
 default-environment="quarto"
