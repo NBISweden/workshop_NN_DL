@@ -6,6 +6,11 @@ format:
   nbis-quarto-revealjs:
     footer: "Intro to NN, pt. 2"
 description: Second NNs with PyTorch
+execute:
+  eval: true
+  echo: false
+  output: true
+  include: true
 jupyter:
   jupytext:
     formats: ipynb,md

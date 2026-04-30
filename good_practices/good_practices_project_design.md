@@ -1,4 +1,11 @@
 ---
+title: "Good practices of NN/DL project design"
+autor:
+    - Claudio Mirabello
+format:
+  nbis-quarto-revealjs:
+    footer: "Good Practices of Project Design"
+description: DOs and DONTs when handling your data
 jupyter:
   jupytext:
     formats: ipynb,md
