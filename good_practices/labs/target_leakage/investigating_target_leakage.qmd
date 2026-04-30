@@ -1,11 +1,12 @@
 ---
+title: 'Target leakage example: classifying text data (tweets)'
 jupyter:
   jupytext:
-    formats: ipynb,md
+    formats: ipynb,qmd
     text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
       jupytext_version: 1.19.1
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -13,8 +14,6 @@ jupyter:
     name: python3
 ---
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
-# Target leakage example: classifying text data (tweets)
 
 In this lab, we will load a new dataset from disk, clean it up and prepare it for training. The data here is of text type, as this is a dataset of 3000 tweets. So, we have to deal with short text inputs.
 
@@ -48,13 +47,13 @@ In this case, for example, the word "the" will always be mapped to the number 1,
 
 * "The question is what to do"      -> [1, 2, 32, 55, 87]
 * "I don't understand the question" -> [12, 4, 123, 1, 2]
-<!-- #endregion -->
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
+
 Let's start by defining helper function to plot curves and train the model:
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 import pickle
 import random
 import sys
@@ -168,28 +167,35 @@ def train(*,
 
 Download the dataset (uncomment and run)
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 !mkdir data/
 !wget -P data https://github.com/NBISweden/workshop-neural-nets-and-deep-learning/raw/refs/heads/master/session_goodPracticesDatasetDesign/lab_targetLeakage/data/tweets.csv
 ```
 
 Now let's load the dataset, which in this case is saved as CSV file, and let's print one tweet:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 import pandas as pd
 
 tweet_dataset = pd.read_csv("data/tweets.csv")
 ```
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 tweet_dataset.head()
 ```
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 tweet_dataset["text"]
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 Then we apply a few basic operations to handle it more easily, for example:
 
 * We add a space after every non-alphanumeric character so that we have, for example "-Hello" -> "- Hello"
@@ -199,9 +205,10 @@ Then we apply a few basic operations to handle it more easily, for example:
 Then we assign a unique integer to each unique word in the dataset, so that we can translate each tweet to a list of numbers. But equal numbers will always correspond to equal words across all tweets! Notice how we reserve the integer "0" for "padding". This means that since the longest tweet has 58 words (so a list of 58 integers), we will add a series of "0"s to shorter tweets until they are also represented by a list of 58 integers.
 
 Lastly, we assign to our labels (in this case the author of the tweets) one class between 0 and 1.
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 #Get rid of all retweets
 tweet_dataset_clean = tweet_dataset[tweet_dataset["is_retweet"] == False]
 
@@ -255,18 +262,17 @@ x = pd.DataFrame(tweet_dataset_clean["numbers"].values.tolist()).values
 x[np.where(np.isnan(x[:]))] = 0
 
 y = np.array(tweet_dataset_clean["label"])
-
 ```
 
 Check the effect that this has had on the first tweet:
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 Now, we will see how we can use Embeddings to transform our dictionary of words into a dictionary of float vectors.
 
 First, let's use Embeddings, followed by Dense layers:
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 class Model(nn.Module):
     def __init__(self, vocabulary_size, sequence_length, convolutional=False):
         super(Model, self).__init__()
@@ -311,11 +317,11 @@ class Model(nn.Module):
         return x, embeddings
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 Split the data, create data loaders:
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 batch_size = 16
 # split the data:
 n_samples = x.shape[0]
@@ -348,11 +354,11 @@ dev_loader = DataLoader(
     )
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 Train the model and plot the training curves:
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # load a new model
@@ -380,14 +386,14 @@ train(model=model,
       device=device)
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 When a model has been trained, you can of course reused to predict future samples. 
 That is how you actually use your model when the job is done!
 
 Can you think of a good dataset that you could use to test your model?
-<!-- #endregion -->
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 tweet = "crooked hillary sad !"
 tweet = tweet.lower()
 words = tweet.split(" ")
@@ -404,9 +410,7 @@ pred, embeddings = model(torch.tensor(tweet_padded, dtype=torch.long))
 print("Predicted logits:", pred)
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 How do we convert these predicted values into probabilities?
-<!-- #endregion -->
 
 ## Questions
 
@@ -416,10 +420,11 @@ How do we convert these predicted values into probabilities?
 * Why does the last layer have 2 units? Why is the activation of the 'softmax' type?
 * Play around with the hyperparameters, is there a way to improve the models?
 
-
 Now let's visualize the outputs of the embedding layer. We extract the embedding layer from the trained model and we use it to calculate embeddings for every word in our dictionary. Then, we map the 32-dimensional output vector onto 2 dimensions with the help of principal component analysis (PCA).
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 n_words = 1000
 words = torch.tensor(np.arange(n_words)[None, :])
 embedded_words = np.squeeze(model.embedding(words).cpu().detach().numpy())
@@ -428,13 +433,14 @@ pca = PCA(n_components=8)
 points_pca = pca.fit_transform(embedded_words)
 ```
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 fig = px.scatter(x=points_pca[:,0], y=points_tsne[:,1], text=[word_dict[i] if i < 8000 else "" for i in range(n_words)], width=2400, height=800)
 fig.update_traces(textposition='top center')
 fig.show()
 ```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 ## Questions: what is wrong (or right) with this dataset?
 
 * Take a few minutes to analyze the word cloud. Can you see what kind of words make the classification easier? If you wanted to make a less biased (and harder to classify) dataset, what would you change? 
@@ -444,11 +450,9 @@ fig.show()
 * Why do you think that the "Dense" network (Feed-forward, fully connected) works as well as the LSTM recurrent network on the dataset as it is now?
 
 * Now that we have trained and validated our model, what would you suggest using as test set?
-<!-- #endregion -->
 
 Here are a few examples of how the dataset can be manipulated. Try these lines of code (and come up with some others!) by pasting them in the right place the code block where the dataset is loaded (second code cell):
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
 ```python
 #Remove a word
 tweet_dataset["text"] = tweet_dataset["text"].str.replace('crooked', '', case=False)
@@ -456,4 +460,3 @@ tweet_dataset["text"] = tweet_dataset["text"].str.replace('crooked', '', case=Fa
 #Remove non-alphanumeric characters
 tweet_dataset["text"] = tweet_dataset["text"].str.replace(r'\s*([^a-zA-Z0-9 ])\s*', '', case=False, regex=True)
 ```
-<!-- #endregion -->

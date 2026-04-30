@@ -1,11 +1,14 @@
 ---
+title: 'Lab session: your first Neural Networks'
+description: PyTorch intro exercises
+notebook-url: '[lab_introduction_to_pytorch.ipynb](basics/labs/lab_introduction_to_pytorch.ipynb)'
 jupyter:
   jupytext:
-    formats: ipynb,md
+    formats: ipynb,qmd
     text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
       jupytext_version: 1.19.1
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -13,7 +16,7 @@ jupyter:
     name: python3
 ---
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
+
 # PyTorch intro exercises
 
 ## 1. Build a simple sequential model
@@ -24,9 +27,8 @@ jupyter:
 * How many outcomes/classes are we predicting?
 
 <center><img src="figures/sequence_api_exercise.png"></center>
-<!-- #endregion -->
 
-```python
+```{python}
 import torch.nn as nn
 #Add your model here
 model = ...
@@ -50,10 +52,11 @@ Only for Tuesday's session:
 * Different activations?
 * Add Dropout? How large?
 
-
 Plotting and training helper functions:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 from typing import Optional
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -162,7 +165,9 @@ def train(*,
 
 Data generation step:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 import numpy as np
 # Generate XOR data
 data = np.random.random((10000, 3)) - 0.5
@@ -175,10 +180,11 @@ for x in range(3):
     print("{0: .2f} xor {1: .2f} xor {2: .2f} equals {3:}".format(data[x,0], data[x,1], data[x,2], labels[x]))
 ```
 
-
 The baseline network to improve:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -230,7 +236,7 @@ train(model=model,
       device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 ```
 
-```python
+```{python}
 #Add your code here
 ```
 
@@ -246,21 +252,20 @@ train(model=model,
     * RM       average number of rooms per dwelling
 * Can we use these variables to predict the value of a house (in tens of thousands of dollars)?
 
-
 Download the data:
 
-```python
+```{python}
 !mkdir -p data
 !wget -P ./data/ https://github.com/selva86/datasets/raw/refs/heads/master/BostonHousing.csv
 ```
 
-```python
+```{python}
 !ls data/
 ```
 
 Load the data with pandas:
 
-```python
+```{python}
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler # hint
@@ -285,7 +290,7 @@ train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
 dev_loader = DataLoader(dev_set, batch_size=32)
 ```
 
-```python
+```{python}
 class MLP(torch.nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -327,7 +332,9 @@ This dataset contains 50k reviews for movies in IMDB, split into a train and tes
 
 Download the raw data and read it into a data structure:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 !mkdir -p data
 !wget -P ./data https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
 !tar -C ./data -zxf ./data/aclImdb_v1.tar.gz
@@ -335,7 +342,9 @@ Download the raw data and read it into a data structure:
 
 Load the dataset:
 
-```python editable=true slideshow={"slide_type": ""}
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
 import os
 import glob
 
@@ -388,15 +397,14 @@ def imdb_dataset(directory='data/',
         return tuple(ret)
 
 train_data = imdb_dataset(train=True)
-
 ```
 
-```python
+```{python}
 len(train_data[0]['text'])
 ```
 
 How do we build a predictor for this task?
 
-```python
+```{python}
 ...
 ```
