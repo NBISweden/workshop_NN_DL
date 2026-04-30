@@ -1,0 +1,54 @@
+---
+title: "Workshop content"
+subtitle: "NBIS_NEUNETDL_V26 • Neural Networks and Deep Learning"
+description: "List of presentations"
+listing:
+  - id: slide-listings
+    type: table
+    grid-columns: 4
+    fields: [session, title, description]
+    field-display-names:
+      session: "Session"
+    sort: false
+    contents:
+      - rnn/lectures/index.qmd
+  - id: lab-listings
+    type: table
+    grid-columns: 4
+    sort: false
+    fields: [session, title, description, notebook-url]
+    field-display-names:
+      notebook-url: "Jupyter Notebook"
+      session: "Session"
+    field-links:
+      - title
+      - notebook-url
+    contents:
+      - rnn/labs/airplanes.qmd
+      - rnn/labs/alphabet.qmd
+date: ""
+toc: false
+sidebar: true
+format:
+  html:
+    number-sections: false
+    page-layout: full
+---
+
+### A note on usage
+
+Html slides have been authored using [revealjs](https://revealjs.com/)
+and can be viewed directly in the browser. Press `s` to view speaker
+notes.
+
+### Slides
+
+:::{#slide-listings}
+
+:::
+
+### Labs
+
+:::{#lab-listings}
+
+:::

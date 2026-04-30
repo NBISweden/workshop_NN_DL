@@ -1,0 +1,8 @@
+# -*- yaml -*-
+# Render to html
+project:
+  render:
+    - index.qmd
+    - rnn/lectures/index.qmd
+    - rnn/labs/alphabet.qmd
+    - rnn/labs/airplanes.qmd

@@ -1,0 +1,5 @@
+# -*- yaml -*-
+# Render slides
+project:
+  render:
+    - rnn/lectures/index.qmd
