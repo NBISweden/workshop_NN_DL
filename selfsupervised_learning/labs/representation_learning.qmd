@@ -53,7 +53,7 @@ import pandas as pd
 
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import Dataset, DataLoader, Subset, SubsetRandomSampler
 from torchvision.datasets import ImageFolder
 import torchvision.transforms.v2 as transforms
 
@@ -79,17 +79,26 @@ import plotly.graph_objects as go
 ```{python}
 torch.cuda.is_available()
 ```
-## Lab session: shallow representations
 
-We'll start with one of the fundamental methods for learning representations: Principal Component Analysis (PCA). PCA is a linear method that finds the directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
+# Representation learning
 
-### Loading the data
+In this lab we'll look at the representations neural networks learn. We'll start by looking at how a neural network learns representations during supervised learning, commonly used in computer vision for transfer learning.
 
-Here we will use images of parasites from a [parasites dataset](https://universe.roboflow.com/graduao/sistema-para-analise-de-ovos-de-parasitas-em-amostra-de-agua-e-sangue). The dataset contain images of 8 different kinds of parasites extracted from microscopic images.
+## Learning supervised representations
+
+By training a neural network on some dataset, the representation it learns might be useful in some other dataset. We'll take a look at how this could work with a small dataset.
+
+### The data
+
+We're using data from the MedMNIST dataset, a varied collection of MNIST-style datasets from the medical imaging domain. The data is in the form of RGB images with a size of $28x28$ pixels.
+
+
 
 ```{python}
 
-# The dataset stores the images with the channel first, in this lab we flatten the images before sending them to the neural network, but the matplotlib visualization functions want's the channel axis first, so we add this transform so the visualization functions don't have to deal with it
+# The dataset stores the images with the channel first, in this lab we flatten the images before sending them to the neural network, 
+# but the matplotlib visualization functions want's the channel axis first, so we add this transform so the 
+# visualization functions don't have to deal with it
 class Transpose(nn.Module):
     def __init__(self, order):
         super(Transpose, self).__init__()
@@ -100,32 +109,15 @@ class Transpose(nn.Module):
 
 # We separate the transforms in the case that we want to add augmentations to the training data later on. For now, we just resize the images to 64x64 pixels, convert them to grayscale and then to tensors.
 train_transforms = transforms.Compose([
-    #transforms.Resize((32, 32)),
-    transforms.Grayscale(num_output_channels=1),
     transforms.ToTensor(),
     Transpose((1,2,0))
 ])
 
 eval_transforms = transforms.Compose([
-    #transforms.Resize((32, 32)),
-    transforms.Grayscale(num_output_channels=1),
     transforms.ToTensor(),
     Transpose((1,2,0))
 ])
 
-# train_data = ImageFolder(
-#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/train", 
-#     transform=train_transforms
-# )
-# dev_data = ImageFolder(
-#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/valid", 
-#     transform=eval_transforms
-# )
-# test_data = ImageFolder(
-#     root = "/home/eriky/src/workshop_NN_DL/selfsupervised_learning/labs/data/parasites/test", 
-#     transform=eval_transforms
-# )
- 
 from medmnist import BloodMNIST
 
 train_data = BloodMNIST(split="train", download=True, transform=train_transforms)
@@ -142,11 +134,8 @@ print("Test dataset size:", len(test_data))
 print("Image shape:", img.shape)
 ```
 
-We've loaded the images as an ImageFolder dataset, which is a convenient way to load images organized in folders. Each folder corresponds to a class, and the images inside are the samples of that class. The `transform` argument allows us to specify how we want to preprocess the images. Here we resize them to grayscale 64x64 pixels and convert them to tensors.
-
 Let's have a look at the images and the targets in the dataset:
 
-And a few example images:
 ```{python}
 rng = np.random.default_rng(seed=1729)
 n_rows, n_cols = 2, 5
@@ -155,11 +144,130 @@ fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 6))
 for i, ax in enumerate(axes.flatten()):
     train_img, y = train_data[image_indices[i]]
     ax.imshow(train_img, cmap='gray')
-    ax.set_title(train_data.labels[y])
+    ax.set_title(y.item())
     ax.axis('off')
 plt.tight_layout()
 plt.show()
 ```
+
+We will simulate having new kinds of data but only training on a subset of the labels.
+
+```{python}
+label_dict = {int(int_label): str_label for int_label, str_label in  train_data.info['label'].items()}
+labels = sorted(label_dict.keys())
+rng = np.random.default_rng(seed=1729)
+held_out_ratio = 0.3
+n_held_out = int(np.ceil(len(labels)*held_out_ratio))
+held_out_labels = rng.choice(labels, size=n_held_out, replace=False)
+kept_labels = [l for l in labels if l not in held_out_labels]
+print(f"Held-out labels: {held_out_labels}, training labels: {kept_labels}
+keep_indices = [i for i,l in enumerate(train_data.labels) if l in kept_labels]
+train_sampler = SubsetRandomSampler(keep_indices)
+```
+
+
+# Self-supervised learning
+
+Now that the data is prepared, we'll train a simple Convolutional Neural Network to solve the problem.
+
+```{python}
+
+class ConvBlock(nn.Module):
+    def __init__(self, n_input_channels, n_output_channels):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(n_input_channels, n_output_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(n_output_channels),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+        )
+
+    def forward(self, x):
+        return self.block(x)
+
+class ConvNet(nn.Module):
+    def __init__(self, n_classes=8, latent_dim=128):
+        super().__init__()
+        self.conv_blocks = nn.ModuleList([
+            ConvBlock(3, 32),    # 28x28 -> 14x14
+            ConvBlock(32, 64),   # 14x14 -> 7x7
+            ConvBlock(64, 128),  # 7x7 -> 3x3
+        ])
+        self.encoder_head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 3 * 3, latent_dim),
+            nn.ReLU(),
+        )
+        self.classifier = nn.Linear(latent_dim, n_classes)
+
+    def encode(self, x):
+        # dataset stores images as (H,W,C); Conv2d needs (C,H,W)
+        x = x.permute(0, 3, 1, 2).float()
+        for block in self.conv_blocks:
+            x = block(x)
+        return self.encoder_head(x)
+
+    def forward(self, x):
+        return self.classifier(self.encode(x))
+
+
+```
+
+Now we'll train the model. We'll use the same training loop throughout the lab, defined below. 
+
+
+```{python}
+def train(model, train_loader, dev_loader, device=None, max_epochs=50, batch_size=64, learning_rate=1e-3, plotlosses=None):
+  if device is None:
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+  model.to(device)
+  optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+  criterion = nn.MSELoss()
+  
+  with tqdm(total=max_epochs, desc="epoch") as epoch_bar:
+      for epoch in range(max_epochs):
+          training_loss_acc = 0
+          training_examples = 0
+          model.train()
+          
+          for i, batch in enumerate(train_loader):
+              x_batch, _ = batch
+              x_batch = x_batch.view(x_batch.size(0), -1)# flatten the images
+              x_batch = x_batch.to(device)  
+              x_recon = model(x_batch)
+              loss = criterion(x_recon, x_batch)
+              optimizer.zero_grad()
+              loss.backward()
+              optimizer.step()
+              training_loss_acc += loss.item()
+              training_examples += x_batch.size(0)
+              
+          model.eval()
+          with torch.no_grad():
+              dev_loss_acc = 0
+              dev_examples = 0
+              for batch in dev_loader:
+                  x_batch, _ = batch
+                  x_batch = x_batch.view(x_batch.size(0), -1)  # flatten the images
+                  x_batch = x_batch.to(device)
+                  x_recon = model(x_batch)
+                  dev_loss_acc += criterion(x_recon, x_batch).item()
+                  dev_examples += x_batch.size(0)
+          #epoch_bar.set_postfix({"train_loss": training_loss_acc / training_examples, "dev_loss": dev_loss_acc / dev_examples})
+          if plotlosses is not None:
+              plotlosses.update({
+                  "loss": training_loss_acc / training_examples,
+                  "val_loss": dev_loss_acc / dev_examples
+              })
+              plotlosses.send()
+          #epoch_bar.update(1)
+```
+
+
+## Lab session: shallow representations
+
+We'll start with one of the fundamental methods for learning representations: Principal Component Analysis (PCA). PCA is a linear method that finds the directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
+
 
 
 
@@ -476,53 +584,6 @@ class LinearAutoencoder(nn.Module):
     def decode(self, z):
         x_hat = self.encoder.weight.t() @ z.t()
         return x_hat.t()
-```
-
-```{python}
-def train(model, train_loader, dev_loader, device=None, max_epochs=50, batch_size=64, learning_rate=1e-3, plotlosses=None):
-  if device is None:
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-  model.to(device)
-  optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
-  criterion = nn.MSELoss()
-  
-  with tqdm(total=max_epochs, desc="epoch") as epoch_bar:
-      for epoch in range(max_epochs):
-          training_loss_acc = 0
-          training_examples = 0
-          model.train()
-          
-          for i, batch in enumerate(train_loader):
-              x_batch, _ = batch
-              x_batch = x_batch.view(x_batch.size(0), -1)# flatten the images
-              x_batch = x_batch.to(device)  
-              x_recon = model(x_batch)
-              loss = criterion(x_recon, x_batch)
-              optimizer.zero_grad()
-              loss.backward()
-              optimizer.step()
-              training_loss_acc += loss.item()
-              training_examples += x_batch.size(0)
-              
-          model.eval()
-          with torch.no_grad():
-              dev_loss_acc = 0
-              dev_examples = 0
-              for batch in dev_loader:
-                  x_batch, _ = batch
-                  x_batch = x_batch.view(x_batch.size(0), -1)  # flatten the images
-                  x_batch = x_batch.to(device)
-                  x_recon = model(x_batch)
-                  dev_loss_acc += criterion(x_recon, x_batch).item()
-                  dev_examples += x_batch.size(0)
-          #epoch_bar.set_postfix({"train_loss": training_loss_acc / training_examples, "dev_loss": dev_loss_acc / dev_examples})
-          if plotlosses is not None:
-              plotlosses.update({
-                  "loss": training_loss_acc / training_examples,
-                  "val_loss": dev_loss_acc / dev_examples
-              })
-              plotlosses.send()
-          #epoch_bar.update(1)
 ```
 
 ```{python}
