@@ -1,0 +1,19 @@
+author: Per Unneberg
+bibliography: assets/biblio.bib
+format:
+  nbis-quarto-revealjs:
+    theme:
+      - default
+      - "assets/custom.scss"
+    text-align: left
+    center: false
+session: RNN
+knitr:
+  opts_chunk:
+    code-fold: false
+    tidy: true
+    comment-char: "#>"
+    fig-format: svg
+    engine.opts:
+      dvisvgm.opts: --font-format=woff
+      template: assets/tikzfig.tex
