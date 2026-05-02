@@ -84,9 +84,14 @@ basics = ["torch", "rise-jupyter", "quarto", "pythonlibs"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
 rnn = ["quarto", "pythonlibs", "torch", "rlibs"]
 
+[tasks.fix_mds]
+cmd = "bash scripts/fix_mds.sh"
+default-environment = "teachers"
+
 [tasks.render_all]
 cmd = "bash scripts/render.sh --profile all --to html"
 default-environment = "teachers"
+depends-on = ["fix_mds"]
 
 [tasks.sync_sitelibs]
 cmd = "cp -r _site/site_libs _site_libs_backup"
