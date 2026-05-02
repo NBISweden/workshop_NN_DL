@@ -22,44 +22,30 @@ jupyter: python3
 Some of the material from this lecture comes from online courses of Charles Ollion and Olivier Grisel - Master Datascience Paris Saclay. CC-By 4.0 license.
 :::
 
-## Beyond Image Classification
+## Beyond image classification
 
-### CNNs
+Classification answers *"what is in this image?"* — but real-world vision asks more:
 
-- Previous lecture: image classification
+- **Where** is the object? *(localisation)*
+- **How many** objects, and which class is each one? *(detection)*
+- **Which pixels** belong to which object? *(segmentation)*
 
-### Limitations
+![](illustrations/cls_4_3.png){fig-align="center" width="80%"}
 
-- Mostly on centered images
-- Only a single object per image
-- Not enough for many real world vision tasks
-
-## Beyond Image Classification
-
-![](illustrations/cls_1.png){fig-align="center" width="90%"}
-
-## Beyond Image Classification
-
-![](illustrations/cls_2.png){fig-align="center" width="90%"}
-
-## Beyond Image Classification
-
-![](illustrations/cls_3.png){fig-align="center" width="90%"}
-
-## Beyond Image Classification
+## From classification to dense prediction
 
 ![](illustrations/cls_4_2.png){fig-align="center" width="90%"}
 
-## Beyond Image Classification
-
-![](illustrations/cls_4_3.png){fig-align="center" width="90%"}
+- Same backbone (CNN/ViT) — but with **task-specific heads**
+- The pretrained classifier is the starting point in (almost) every modern approach
 
 ## Outline
 
-- Simple Localisation as regression
-- Detection Algorithms
-- Fully Convolutional Networks
-- Semantic & Instance Segmentation
+- Localisation as regression
+- Detection algorithms (YOLO, RetinaNet, Faster R-CNN)
+- Fully convolutional networks → **U-Net**
+- Losses and transfer learning for segmentation
+- Instance segmentation (Mask R-CNN) and what came after
 
 ## Localisation
 
@@ -99,29 +85,37 @@ We don't know in advance the number of objects in the image. Object detection re
 
 ## YOLO (You Only Look Once)
 
-![](illustrations/yolo1.png){fig-align="center" width="60%"}
+![](illustrations/yolo1.png){fig-align="center" width="50%"}
 
 For each cell of the $S \times S$ grid predict:
 
 - $B$ **boxes** and **confidence scores** $C$ ($5 \times B$ values) + **classes** $c$
 - Final detections: $C_j \cdot \mathrm{prob}(c) > \text{threshold}$
 
-::: {.notes}
-Redmon, Joseph, et al. "You only look once: Unified, real-time object detection." CVPR (2016)
-:::
+. . .
 
-## YOLO — features
-
-![](illustrations/yolo1.png){fig-align="center" width="60%"}
-
-YOLO features:
-
-- Computationally very fast, can be used in real time
-- Globally processes the entire image once with a single CNN
+- One CNN, one forward pass — **real-time** detection
+- Globally processes the entire image at once
 
 ::: {.notes}
-Redmon, Joseph, et al. "You only look once: Unified, real-time object detection." CVPR (2016)
+Redmon et al. "You only look once: Unified, real-time object detection." CVPR 2016. The single-shot grid is still the conceptual core, even if modern YOLO versions add anchor-free heads, FPN, decoupled heads, etc.
 :::
+
+## YOLO today
+
+The original YOLO concept is now a **mature production library** maintained by Ultralytics.
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("yolo11n.pt")          # COCO-pretrained, ~3 MB
+results = model.predict("img.jpg")   # detection
+results = model.predict("img.jpg", task="segment")  # instance segmentation
+```
+
+- Current generation: **YOLOv11** (2024) — anchor-free, decoupled heads, FPN
+- One package covers detection, instance segmentation, pose estimation, OBB, tracking
+- Real-time on CPU for the small variants; GPU for bigger ones
 
 ## RetinaNet
 
@@ -207,29 +201,52 @@ Long, Jonathan, et al. "Fully convolutional networks for semantic segmentation."
 Noh, Hyeonwoo, et al. "Learning deconvolution network for semantic segmentation." ICCV 2015
 :::
 
-## Skip connections
+## U-Net
 
-![](illustrations/deconv.png){fig-align="center" width="80%"}
+![](illustrations/unet.png){fig-align="center" width="65%"}
 
-- **Skip connections** between corresponding convolution and deconvolution layers
-- **Sharper masks** by using precise spatial information (early layers)
-- **Better object detection** by using semantic information (late layers)
-
-::: {.notes}
-Noh, Hyeonwoo, et al. "Learning deconvolution network for semantic segmentation." ICCV 2015
-:::
-
-## Hourglass network
-
-![](illustrations/hourglass.png){fig-align="center" width="80%"}
-
-- U-Net like architectures repeated sequentially
-- Each block refines the segmentation for the following
-- Each block has a segmentation loss
+- Symmetric **encoder–decoder** with **skip connections** that concatenate features from the contracting path to the expanding path
+- Trains well on **small datasets** with heavy augmentation
+- Fully convolutional → arbitrary input sizes at inference
+- The default architecture for **biomedical and microscopy** segmentation — directly relevant to the lab
 
 ::: {.notes}
-Newell, Alejandro, et al. "Stacked Hourglass Networks for Human Pose Estimation." ECCV 2016
+Ronneberger, Fischer, Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." MICCAI 2015. Skip connections concatenate (not add, as in ResNet) to preserve spatial detail through the bottleneck.
 :::
+
+## Segmentation losses
+
+Segmentation = per-pixel classification, but with a strong **class-imbalance** problem (background dominates).
+
+- **Cross-entropy** (per pixel) — the default, but biased toward the majority class
+- **Dice loss** — directly optimizes overlap with the ground-truth mask:
+
+$$\mathcal{L}_{\text{Dice}} = 1 - \frac{2 \, |P \cap G|}{|P| + |G|}$$
+
+- **Focal loss** — down-weights easy pixels, focuses on hard ones (same idea as RetinaNet, applied per-pixel)
+
+. . .
+
+In practice for biomedical/microscopy: train with **BCE + Dice** (sum of the two) for stable convergence on imbalanced masks.
+
+## Transfer learning for segmentation
+
+Same recipe as classification: **pretrained encoder + task-specific decoder**.
+
+```python
+import segmentation_models_pytorch as smp
+
+model = smp.Unet(
+    encoder_name="resnet34",       # any timm/torchvision backbone
+    encoder_weights="imagenet",    # ImageNet-pretrained
+    in_channels=1,                  # grayscale microscopy
+    classes=5,                      # number of mask channels
+)
+```
+
+- Decoder is randomly initialized; encoder starts from ImageNet weights
+- Works even when the input domain (microscopy, satellite, MRI) differs from ImageNet
+- Same library exposes **U-Net, FPN, DeepLabV3+, MA-Net**, etc. — swap one string
 
 ## Mask R-CNN
 
@@ -252,21 +269,28 @@ K. He et al. Mask Region-based Convolutional Network (Mask R-CNN) NIPS 2017
 K. He et al. Mask R-CNN. NIPS 2017
 :::
 
-## Mask R-CNN — More results
+## What came after Mask R-CNN
 
-![](illustrations/maskrcnnresults2.png){fig-align="center" width="85%"}
+| Year | Model         | Key idea                                                |
+|------|---------------|---------------------------------------------------------|
+| 2020 | **DETR**      | Transformer detection, end-to-end, no anchors / no NMS  |
+| 2022 | **Mask2Former** | Unified semantic / instance / panoptic segmentation     |
+| 2023 | **SAM**       | Promptable segmentation — *"click and get a mask"*      |
+| 2024 | **SAM 2**     | SAM extended to **video** with temporal consistency     |
 
-::: {.notes}
-He, Kaiming, et al. "Mask R-CNN." International Conference on Computer Vision (ICCV), 2017.
-:::
+. . .
+
+**Foundation models for segmentation** (SAM 2, Grounding DINO, …) — pretrained on billions of masks, often **zero-shot** for new domains. Covered in **Friday's self-supervised lecture**.
 
 ## Summary
 
 - **Localisation**: regression heads on a CNN backbone for $(x, y, w, h)$
-- **Detection**: single-stage (YOLO, RetinaNet) vs. two-stage (Faster R-CNN)
-- **Segmentation**: convolutionalize a classifier, add transposed convolutions and skip connections
-- **Instance segmentation**: combine detection and segmentation (Mask R-CNN)
+- **Detection**: single-stage (YOLO, RetinaNet) vs. two-stage (Faster R-CNN); modern YOLO is a one-line `pip install`
+- **Segmentation**: encoder–decoder with skip connections — **U-Net** is the workhorse for biomedical imaging
+- **Train it right**: pretrained encoder + BCE + Dice loss + augmentation
+- **Instance segmentation**: Mask R-CNN, then DETR / Mask2Former
+- **2026 reality**: foundation models (SAM 2, Grounding DINO) often give zero-shot masks — covered Friday
 
 ::: {.notes}
-Next: hands-on segmentation labs.
+Next: hands-on segmentation lab on biological images, where U-Net + Dice loss is the natural baseline.
 :::
