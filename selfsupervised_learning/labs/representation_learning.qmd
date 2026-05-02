@@ -254,6 +254,7 @@ img, _ = train_data[0]
 
 IMG_SHAPE = img.shape
 N_CHANNELS, HEIGHT, WIDTH = IMG_SHAPE
+N_CLASSES = len(train_data.info['label'])
 
 print("Train dataset size:", len(train_data))
 print("Development dataset size:", len(dev_data))
@@ -355,19 +356,101 @@ latent_dim = 128
 train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size, num_workers=8)
 dev_loader = DataLoader(dev_data, sampler=dev_sampler, batch_size=batch_size, drop_last=True, num_workers=8)
 
-cnn_model = ConvNet(input_channels=N_CHANNELS, n_classes=len(kept_labels), latent_dim=latent_dim)
-optimizer = AdamW(cnn_model.parameters(), lr=1e-3, weight_decay=1e-5)
+device = torch.device('cuda')
+
+cnn_model = ConvNet(input_channels=N_CHANNELS, n_classes=N_CLASSES, latent_dim=latent_dim)
+cnn_model.to(device)
+optimizer = AdamW(cnn_model.parameters(), lr=1e-4, weight_decay=1e-5)
 criterion = CrossEntropyLoss()
 liveplot = LivePlot()
 ```
 ```{python}
-next(iter(train_loader))[1].shape
+x, y = next(iter(train_loader))
+y_hat = cnn_model(x.to(device))
+criterion(y_hat, y.squeeze().to(device))
+
 ```
 ```{python}
 # Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
-train(model=cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=10, liveplot=liveplot)
+train(model=cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=10, device=device, liveplot=liveplot)
 ```
 
+
+## Looking at the representations
+
+Now that we've trained the network we can look at how it maps the images to different representations. A useful tool for creating feature extractors is the `create_feature_extractor` from the torchvision package. First we inspect what layers our network contain using the `get_graph_node_names` function.
+
+```{python}
+from torchvision.models.feature_extraction import get_graph_node_names
+train_nodes, eval_nodes = get_graph_node_names(cnn_model)
+print("Eval nodes:")
+for node in eval_nodes:
+    print(node)
+```
+
+The function traces the modules in the network, and creates one list for nodes used in training and one for evaluation. We're interested in the evaluation list because we want to use the module in evaluation mode.
+The modules with the names `encoder_head.[0-2]` are the ones we're interested in, they correspond to the layers we used to construct the model above:
+
+```python
+        self.encoder_head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 3 * 3, latent_dim),
+            nn.ReLU(),
+        )
+```
+
+So the features directly from the conv layers correspond to the Flatten node, which is `encoder_head.0`. We also might want to inspect the features after the nonlinearity (the ones used as input to the classifier). These are the results after the ReLU, so correspond to `encoder_head.2`. Knowing the names of the nodes we can now create a feature extractor with our module as a base:
+
+```{python}
+from torchvision.models.feature_extraction import create_feature_extractor
+feature_extractor = create_feature_extractor(cnn_model, return_nodes={'encoder_head.0': 'flat_conv_features', 'encoder_head.2': 'encoder_features'})
+```
+
+We now have created a feature extractor for our model. It will behave like our original model, but instead of returning the result of the `forward()` method like our base model, it will return a dictionary containing the keys `flat_conv_features` and `encoder_features` with the vectors corresponding to the results of those nodes. Let's use this to embed our test exampels.
+
+ ```{python}
+test_loader = DataLoader(test_data, batch_size=batch_size)
+conv_features = []
+encoder_features = []
+labels = []
+feature_extractor.eval()
+with torch.inference_mode():
+    for batch in test_loader:
+        x, y = batch
+        labels.extend(y.squeeze())
+        extracted_features = feature_extractor(x.to(device))
+        conv_features.append(extracted_features['flat_conv_features'].cpu().numpy())
+        encoder_features.append(extracted_features['encoder_features'].cpu().numpy())
+
+encoder_features = np.concatenate(encoder_features)
+conv_features = np.concatenate(conv_features)
+```
+
+
+
+```{python}
+import umap
+
+# This general visualization function will be used throughout the lab. It assumes a pytorch model with an `encode` method that takes in a batch of data and returns the corresponding latent representations. It then applies UMAP to the latent representations to project them to 2D, and visualizes the result using a scatter plot colored by the class labels.
+
+def visualize_latent_space(features, labels, model_name):
+    reducer = umap.UMAP(n_components=2, random_state=1729)
+    embedding = reducer.fit_transform(features)
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=labels, cmap="tab10", s=20)
+    plt.colorbar(scatter)
+    plt.title(f"UMAP projection of {model_name} representations data with k={features.shape[1]}")
+    plt.tight_layout()
+    plt.show()
+```
+
+```{python}
+visualize_latent_space(conv_features, labels, "Conv features")
+```
+
+```{python}
+visualize_latent_space(encoder_features, labels, "Encoder features")
+```
 
 ## Lab session: shallow representations
 
