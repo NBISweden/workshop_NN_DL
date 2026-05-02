@@ -330,6 +330,7 @@ class ConvNet(nn.Module):
             nn.Linear(128 * 3 * 3, latent_dim),
             nn.ReLU(),
         )
+        self.bn = nn.BatchNorm1d(latent_dim, affine=False)
         self.classifier = nn.Linear(latent_dim, n_classes)
 
     def encode(self, x):
@@ -338,9 +339,11 @@ class ConvNet(nn.Module):
         return self.encoder_head(x)
 
     def forward(self, x):
-        return self.classifier(self.encode(x))
-
-
+        embedded = self.encode(x)
+        batch_normed = self.bn(embedded)
+        normalized = F.normalize(batch_normed, dim=1)        
+        return self.classifier(normalized)
+        
 ```
 
 Now we'll train the model. We'll use the same training loop throughout the lab, defined below. 
@@ -349,7 +352,7 @@ Now we'll train the model. We'll use the same training loop throughout the lab, 
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
 
-batch_size = 32
+batch_size = 128
 latent_dim = 128
 
 # Note that we use the train_sampler, which only samples examples from the labelsubset
@@ -364,15 +367,10 @@ optimizer = AdamW(cnn_model.parameters(), lr=1e-4, weight_decay=1e-5)
 criterion = CrossEntropyLoss()
 liveplot = LivePlot()
 ```
-```{python}
-x, y = next(iter(train_loader))
-y_hat = cnn_model(x.to(device))
-criterion(y_hat, y.squeeze().to(device))
 
-```
 ```{python}
 # Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
-train(model=cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=10, device=device, liveplot=liveplot)
+train(model=cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=20, device=device, liveplot=liveplot)
 ```
 
 
@@ -403,7 +401,7 @@ So the features directly from the conv layers correspond to the Flatten node, wh
 
 ```{python}
 from torchvision.models.feature_extraction import create_feature_extractor
-feature_extractor = create_feature_extractor(cnn_model, return_nodes={'encoder_head.0': 'flat_conv_features', 'encoder_head.2': 'encoder_features'})
+feature_extractor = create_feature_extractor(cnn_model, return_nodes={'encoder_head.0': 'flat_conv_features', 'encoder_head.2': 'encoder_features', 'normalize':'norm_features'})
 ```
 
 We now have created a feature extractor for our model. It will behave like our original model, but instead of returning the result of the `forward()` method like our base model, it will return a dictionary containing the keys `flat_conv_features` and `encoder_features` with the vectors corresponding to the results of those nodes. Let's use this to embed our test exampels.
@@ -412,6 +410,7 @@ We now have created a feature extractor for our model. It will behave like our o
 test_loader = DataLoader(test_data, batch_size=batch_size)
 conv_features = []
 encoder_features = []
+norm_features = []
 labels = []
 feature_extractor.eval()
 with torch.inference_mode():
@@ -421,36 +420,228 @@ with torch.inference_mode():
         extracted_features = feature_extractor(x.to(device))
         conv_features.append(extracted_features['flat_conv_features'].cpu().numpy())
         encoder_features.append(extracted_features['encoder_features'].cpu().numpy())
+        norm_features.append(extracted_features['norm_features'].cpu().numpy())
 
 encoder_features = np.concatenate(encoder_features)
 conv_features = np.concatenate(conv_features)
+norm_features = np.concatenate(norm_features)
 ```
-
 
 
 ```{python}
 import umap
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # This general visualization function will be used throughout the lab. It assumes a pytorch model with an `encode` method that takes in a batch of data and returns the corresponding latent representations. It then applies UMAP to the latent representations to project them to 2D, and visualizes the result using a scatter plot colored by the class labels.
 
-def visualize_latent_space(features, labels, model_name):
+def visualize_latent_space(features, feature_labels, model_name, cmap_name="tab10"):
     reducer = umap.UMAP(n_components=2, random_state=1729)
     embedding = reducer.fit_transform(features)
     plt.figure(figsize=(8, 6))
-    scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=labels, cmap="tab10", s=20)
-    plt.colorbar(scatter)
-    plt.title(f"UMAP projection of {model_name} representations data with k={features.shape[1]}")
+    cmap = plt.get_cmap("tab10", N_CLASSES)          # resample to exactly n_classes slots
+    norm = mcolors.BoundaryNorm(boundaries=np.arange(-0.5, N_CLASSES), ncolors=N_CLASSES)
+    
+    scatter = plt.scatter(embedding[:, 0], embedding[:, 1], c=feature_labels, cmap=cmap, norm=norm, s=20, alpha=.8)
+    plt.colorbar(scatter, ticks=np.arange(N_CLASSES))
+    plt.title(f"UMAP projection of {model_name} representations with d={features.shape[1]}")
     plt.tight_layout()
     plt.show()
 ```
 
 ```{python}
-visualize_latent_space(conv_features, labels, "Conv features")
+visualize_latent_space(conv_features, labels, f"Conv features (held-out labels {held_out_labels})")
 ```
 
 ```{python}
-visualize_latent_space(encoder_features, labels, "Encoder features")
+visualize_latent_space(encoder_features, labels, f"Encoder features (held-out labels {held_out_labels})")
 ```
+
+```{python}
+visualize_latent_space(norm_features, labels, f"Normalized features (held-out labels {held_out_labels})")
+```
+
+# Contrastive learning 
+
+We've seen how representations can be learned using regular supervised learning. We'll change this a bit and see how we can drop the idea of classification, and instead learn representations using contrastive learning.
+Instead of attracting examples to a per-class vector, we'll attract and repel them from each others.
+
+```{python}
+def supcon_loss(z, y, temperature: float = 0.07):
+    """
+    Supervised contrastive (SupCon) loss.
+
+    For each anchor i, maximise the average log-probability of sampling a
+    same-class example j relative to all other examples in the batch:
+
+        L_i = -(1/|P(i)|) * sum_{j in P(i)} [ s_ij/T - log sum_{k≠i} exp(s_ik/T) ]
+
+    Unlike a margin-based loss this is never geometrically infeasible: it finds
+    the best attainable arrangement and never collapses classes to share an angle
+    just to escape an impossible hard constraint.  Lower T gives sharper
+    separation (analogous to a smaller margin).
+    """
+    import torch
+
+    # B is the batch size
+    B   = z.size(0)
+    # Sim is the matrix of dot-products between all pairs of features
+    # We have a temperature which we can use to scale the features. 
+    # The lower the temperature, the more weight we will assign the contrast between different labels
+    sim = (z @ z.T) / temperature
+
+    # The identity matrix is central, we use it to mask the 
+    # self-pairs which are uninformative (they have the same vector)
+    eye  = torch.eye(B, dtype=torch.bool, device=z.device)
+    # By setting -inf at the diagonal, the self-pairs will receive zero weight
+    sim  = sim.masked_fill(eye, float("-inf"))
+    
+    # We create a target matrix by broadcasting y as a row vector against itself as a column vector. 
+    # This creates a matrix of the same shape as sim, which will be True wherever the y_i and 
+    # y_j pair have the same class. We also make sure the diagonal is filled with 
+    # False values since we don't care about that similarity
+    same  = (y.unsqueeze(0) == y.unsqueeze(1)) & ~eye
+
+    # Tally the total number of positive pairs. We clamp it to 1 to avoid dividing by zero.
+    n_pos = same.float().sum(dim=1).clamp(min=1)
+
+    # logsumexp first exponentiate all elements of the similarity. This is why we set the diagonal to 
+    # 0. We then take the sum of the entries along the rows, followed by taking the logarithm of these sums.
+    # 
+    log_denom = torch.logsumexp(sim, dim=1, keepdim=True)
+    log_prob  = sim - log_denom                       # (B, B) log-probabilities
+    per_anchor = -(torch.where(same, log_prob, torch.zeros_like(log_prob))
+               .sum(dim=1)) / n_pos
+   
+    return per_anchor[same.any(dim=1)].mean()
+```
+
+```{python}
+import torch.nn as nn
+import torch.nn.functional as F        
+
+class ContrastiveConvNet(nn.Module):
+    def __init__(self, input_channels, n_classes, latent_dim=128):
+        super().__init__()
+        self.conv_blocks = nn.ModuleList([
+            ConvBlock(input_channels, 32),    # 28x28 -> 14x14
+            ConvBlock(32, 64),   # 14x14 -> 7x7
+            ConvBlock(64, 128),  # 7x7 -> 3x3
+        ])
+        self.encoder_head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 3 * 3, latent_dim),
+            nn.ReLU(),
+        )
+        self.projection_head =  nn.Sequential(
+            nn.Linear(latent_dim, latent_dim),
+            nn.ReLU(),
+        )
+        self.bn = nn.BatchNorm1d(latent_dim, affine=False)
+
+    def encode(self, x):
+        for block in self.conv_blocks:
+            x = block(x)
+        return self.encoder_head(x)
+
+    def forward(self, x):
+        embedding = self.encode(x)
+        projection = self.projection_head(embedding)
+        batch_normed = self.bn(projection)
+        return F.normalize(batch_normed, dim=1)        
+```
+
+
+```{python}
+from torch.optim import AdamW
+from torch.nn import CrossEntropyLoss
+
+batch_size = 128
+latent_dim = 128
+
+# Note that we use the train_sampler, which only samples examples from the labelsubset
+train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size, num_workers=8)
+dev_loader = DataLoader(dev_data, sampler=dev_sampler, batch_size=batch_size, drop_last=True, num_workers=8)
+
+device = torch.device('cuda')
+
+contrastive_cnn_model = ContrastiveConvNet(input_channels=N_CHANNELS, n_classes=N_CLASSES, latent_dim=latent_dim)
+contrastive_cnn_model.to(device)
+optimizer = AdamW(contrastive_cnn_model.parameters(), lr=1e-4, weight_decay=1e-5)
+criterion = supcon_loss # We use the Supervised Contrastive loss
+liveplot = LivePlot()
+```
+
+```{python}
+x, y = next(iter(train_loader))
+y_hat = cnn_model(x.to(device))
+supcon_loss(y_hat, y.squeeze().to(device))
+```
+
+```{python}
+# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
+train(model=contrastive_cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=20, device=device, liveplot=liveplot)
+```
+
+### Inspect representations
+
+Like before we can construct a feature extractor from this model
+
+```{python}
+from torchvision.models.feature_extraction import get_graph_node_names
+train_nodes, eval_nodes = get_graph_node_names(contrastive_cnn_model)
+print("Eval nodes:")
+for node in eval_nodes:
+    print(node)
+```
+
+The interesting features here are `encoder_head.0` and `encoder_head.2` which share the same upstreams architecture with our previous model. The `normalize` feature are interesting since  they are the ones we have trained the contrastive loss against. Often with contrastive learning, we don't use the features from the projection head, as those become too specialized for the specific pairs we contrasted on.
+
+```{python}
+from torchvision.models.feature_extraction import create_feature_extractor
+feature_extractor = create_feature_extractor(contrastive_cnn_model, return_nodes={'encoder_head.0': 'flat_conv_features', 'encoder_head.2': 'encoder_features', 'normalize': 'contrastive_features'})
+```
+
+We now have created a feature extractor for our model. It will behave like our original model, but instead of returning the result of the `forward()` method like our base model, it will return a dictionary containing the keys `flat_conv_features` and `encoder_features` with the vectors corresponding to the results of those nodes. Let's use this to embed our test exampels.
+
+ ```{python}
+test_loader = DataLoader(test_data, batch_size=batch_size)
+conv_features = []
+encoder_features = []
+contrastive_features = []
+labels = []
+feature_extractor.eval()
+with torch.inference_mode():
+    for batch in test_loader:
+        x, y = batch
+        labels.extend(y.squeeze())
+        extracted_features = feature_extractor(x.to(device))
+        conv_features.append(extracted_features['flat_conv_features'].cpu().numpy())
+        encoder_features.append(extracted_features['encoder_features'].cpu().numpy())
+        contrastive_features.append(extracted_features['contrastive_features'].cpu().numpy())
+
+encoder_features = np.concatenate(encoder_features)
+conv_features = np.concatenate(conv_features)
+contrastive_features = np.concatenate(contrastive_features)
+```
+
+```{python}
+visualize_latent_space(conv_features, labels, f"Conv features (held-out labels {held_out_labels})")
+```
+
+```{python}
+visualize_latent_space(encoder_features, labels, f"Encoder features (held-out labels {held_out_labels})")
+```
+
+```{python}
+visualize_latent_space(contrastive_features, labels, f"Contrastive features (held-out labels {held_out_labels})")
+```
+
+
+
+# Self-supervised representation learning
+
+We've seen how supervised learning is able to learn representations, but as these 
 
 ## Lab session: shallow representations
 
