@@ -30,9 +30,9 @@ To run this notebook on Google Colab:
 3. Make a copy to your own Google Drive before starting your work, so that your changes are saved.
 4. Download and unzip the data by running the following in a new cell:
 
-```python
-!wget https://raw.githubusercontent.com/NBISweden/workshop_NN_DL/cnn/labs/data.zip
-!unzip data.zip
+```{python}
+!wget https://user.it.uu.se/~chrav452/workshop_NN_DL_cnn_data.zip
+!unzip workshop_NN_DL_cnn_data.zip
 ```
 
 # Segmentation of Human Blood Cells using Convolutional Neural Networks
