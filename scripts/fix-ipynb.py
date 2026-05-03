@@ -3,6 +3,7 @@ import sys
 import re
 
 MARKER_HIDDEN = "# source_hidden"
+MARKER_SOLUTION = "# solution_hidden"
 SEPARATORS    = {"<!-- -->", "<!-- cell -->", ""}   # cells to remove
 
 def process_notebook(nb):
@@ -11,7 +12,9 @@ def process_notebook(nb):
         source = "".join([x.strip() for x in cell.source])
         if (cell.cell_type == "raw") and (cell.source in SEPARATORS):
             continue
-        if MARKER_HIDDEN in cell.source:
+        if cell.source.startswith(MARKER_HIDDEN):
+            cell.metadata["jupyter"] = {"source_hidden": True}
+        if cell.source.startswith(MARKER_SOLUTION):
             cell.metadata["jupyter"] = {"source_hidden": True}
         new_cells.append(cell)
     nb.cells = new_cells

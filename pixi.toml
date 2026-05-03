@@ -79,10 +79,9 @@ r-devtools = ">=2.5.0,<3"
 [environments]
 default = ["torch", "pythonlibs"]
 quarto = ["quarto"]
-teachers = ["torch", "quarto", "pythonlibs", "rlibs"]
+teachers = ["torch", "quarto", "pythonlibs", "rlibs", "rise-jupyter"]
 basics = ["torch", "rise-jupyter", "quarto", "pythonlibs"]
 local-amd = ["rocm", "rise-jupyter", "quarto", "pythonlibs"]
-rnn = ["quarto", "pythonlibs", "torch", "rlibs"]
 
 [tasks.fix_mds]
 cmd = "bash scripts/fix_mds.sh"

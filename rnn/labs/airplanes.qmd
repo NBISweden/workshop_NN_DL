@@ -42,6 +42,7 @@ import os
 import sys
 import math 
 import numpy as np
+import random
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -49,6 +50,125 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+```
+
+For reproducibility we can set seeds:
+
+```{python }
+SEED=22
+torch.manual_seed(SEED)
+random.seed(SEED)
+np.random.seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+```
+
+
+### Utility classes and functions
+
+We add utility classes and functions for plotting and training.
+
+```{python}
+from typing import Optional
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+import torchmetrics
+
+class LivePlot():
+    def __init__(self, left_label="Loss", right_label="Accuracy"):
+        self.fig = go.FigureWidget(
+            make_subplots(specs=[[{"secondary_y": True}]])
+        )
+        self.fig.update_yaxes(title_text=left_label,  secondary_y=False)
+        self.fig.update_yaxes(title_text=right_label, secondary_y=True)
+
+        self.plot_indices = {}
+        self.trace_secondary = {}
+        display(self.fig)
+        self.limits = [0, 0]
+        self.current_x = 0
+
+    def report(self, name: str, value: float, secondary_y: bool = False):
+        try:
+            plot_index = self.plot_indices[name]
+        except KeyError:
+            plot_index = len(self.fig.data)
+            self.fig.add_scatter(
+                y=[], x=[], name=name,
+                secondary_y=secondary_y
+            )
+            self.plot_indices[name] = plot_index
+            self.trace_secondary[name] = secondary_y
+        self.fig.data[plot_index].y += (value,)
+        self.fig.data[plot_index].x += (self.current_x,)
+
+    def increment(self, n_ticks: int):
+        self.limits[1] += n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+
+    def set_limit(self, n_ticks: int):
+        self.limits[1] = n_ticks
+        self.fig.update_layout(xaxis_range=self.limits)
+
+    def tick(self, n_ticks: Optional[int] = None):
+        if n_ticks is None:
+            n_ticks = 1
+        self.current_x += n_ticks
+
+def train(*,
+          model: torch.nn.Module,
+          train_loader: DataLoader,
+          dev_loader: DataLoader,
+          optimizer: torch.optim.Optimizer,
+          criterion: torch.nn.Module,
+          max_epochs: int,
+          metric: Optional[torchmetrics.metric] = None,
+          device: Optional[torch.device] = None,
+          liveplot: Optional[LivePlot]=None):
+    if device is None:
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    model.to(device)
+
+    for epoch in range(max_epochs):
+        training_loss_acc = 0
+        training_examples = 0
+        model.train()
+
+        for i, batch in enumerate(train_loader):
+            optimizer.zero_grad()
+
+            x_batch, y_batch = batch
+            x_batch = x_batch.to(device)
+            y_hat = model(x_batch)
+
+            loss = criterion(y_hat, y_batch.to(device))
+            loss.backward()
+
+            optimizer.step()
+            training_loss_acc += loss.item()
+            training_examples += x_batch.size(0)
+
+        model.eval()
+        with torch.no_grad():
+            dev_loss_acc = 0
+            dev_examples = 0
+            dev_accuracy = 0
+            for i, batch in enumerate(dev_loader):
+                x_batch, y_batch = batch
+                x_batch = x_batch.to(device)
+                y_hat = model(x_batch)
+                dev_loss_acc += criterion(y_hat, y_batch.to(device)).item()
+                dev_examples += x_batch.size(0)
+                if metric:
+                    dev_accuracy += metric(torch.argmax(y_hat, -1), y_batch)
+
+        if liveplot is not None:
+            liveplot.tick() # Update the liveplot time
+            liveplot.report("Training loss", training_loss_acc / training_examples)
+            liveplot.report("Development loss", dev_loss_acc / dev_examples)
+            if metric:
+                liveplot.report("Development accuracy", dev_accuracy / (i+1), secondary_y=True)
 ```
 
 ## Lab session: predicting airline passengers
@@ -59,7 +179,7 @@ In this lab the idea is to try out different RNN models on the Box &
 Jenkins monthly airline passengers dataset. The dataset is a monthly
 time series of airline passengers recorded in the 50'ies and 60'ies.
 Your task is to build a model to make a future prediction of the
-number of passengers given a number of observation.
+number of passengers given a number of observations.
 
 You will download data and prepare it for later analyses. More
 specifically, you will partition the data into a training and test
@@ -68,7 +188,27 @@ into time slices, where a slice corresponds to the input (X) and the
 consecutive time point the (known) output (Y).
 
 To help you along the way, some of the steps have been prepared in
-advance, but in most cases, your task is to complete missing code.
+advance, but in most cases, your task is to complete missing code,
+indicated by a comment such as `# Add code` or similar:
+
+```{python }
+# Add code to print "hello world"
+```
+
+These code blocks will be followed by a folded code block mark with `#
+solution_hidden` which contains a suggested solution. To expand the
+code block, simply click on it. Try to complete the code yourself with
+the aid of documentation before looking at the solution!
+
+<!-- -->
+
+```{python }
+# solution_hidden: Hello world
+print("hello world")
+```
+
+<!-- -->
+
 Don't hesitate to change parameter settings and experiment with the
 model architectures. Also, make sure to examine the contents of
 variables by printing them. Things to try:
@@ -173,7 +313,7 @@ split_index = int(df.shape[0] * train_fraction)
 ```
 
 Finally, we create two datasets based on `split_index`. Our dataset
-class defines a function `__getitem__` that ensures we option
+class defines a function `__getitem__` that ensures we obtain
 input/output (X/Y) data points for training. The `window_size`
 parameter can be thought of as the size of the time slice backwards in
 time that we model the next time point on. Since the time unit is
@@ -185,15 +325,15 @@ making predictions.
 
 ```{python }
 data = torch.tensor(df.passengers, dtype=torch.float32).unsqueeze(-1)
-train = PassengerDataset(
+train_data = PassengerDataset(
     data[:split_index],
     time=df.time[:split_index],
     window_size=12
 )
-test = PassengerDataset(
+test_data = PassengerDataset(
     data[split_index:],
     time=df.time[split_index:],
-    window_size=12, scaler=train.scaler
+    window_size=12, scaler=train_data.scaler
 )
 ```
 
@@ -201,33 +341,76 @@ Plot the datasets to visualize the split. Notice in particular the
 magnitude of the y-values for both datasets.
 
 ```{python}
-plt.plot(train.time, train.data), plt.plot(test.time, test.data);
+plt.plot(train_data.time, train_data.data), plt.plot(test_data.time, test_data.data);
 ```
 
 ### The model
 
-Complete the model below to include a
+Complete the model below to include a vanilla
 [RNN](https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#rnn)
 layer and a
 [Linear](https://docs.pytorch.org/docs/stable/generated/torch.nn.modules.linear.Linear.html)
-output layer. If you look at the RNN documentation, you will find that
-`inputs` is a 3D tensor (`[batch, seq_len, hidden]`). Since we are
-using univariate data (i.e. one feature, namely the number of
-passengers, per time step), `hidden=1`. Consult the documentation or
-lecture notes for more information. 
+output layer.
+
+If you look at the documentation for the `RNN` class, you will find
+that `inputs` is a 3D tensor (`[L,N,Hin]` or *(seq, batch, feature)*),
+where *feature* is the size of the input feature (option
+`input_size`). Since we are using univariate data (i.e. one feature,
+namely the number of passengers, per time step), `input_size=1`. Since
+most PyTorch operations use `batch_size` as the leading dimension
+(*(batch, seq, feature)*), you should also set `batch_size=True`
+
+The RNN output is a tensor tuple *(output, h_n)* corresponding to the
+output features of the last layer and the final hidden state. The
+output tensor has shape *(batch, seq, output size)* and the hidden
+state tensor has shape *(num_layers, batch, output size)*. In the RNN
+constructor call, the output is equivalent to `hidden_size`.
+
+In the model forward pass, you connect the final output to one or
+multiple `Linear` layers, whose final outcome is a passenger
+prediction for the next time point. The final output should therefore
+have output size 1.
+
+Consult the documentation or lecture notes for more information.
 
 ```{python}
 #| eval: false
 class AirlineRNN(...):
-    def __init__(...):
+    def __init__(self, ...):
         # Add one RNN layer and 1-2 Linear layers
+        # Parametrize hidden and output sizes in function call
+        super().__init__()
+        # Input tensor shape: (batch_size, time_steps, features)
+        self.rnn = nn.RNN(
+            input_size=...,
+            hidden_size=...,
+            num_layers=...,
+            batch_first=...,
+            nonlinearity=...
+        )
+        # Linear layers have dimension in_features, out_features
+        self.fc1 = nn.Linear(...)
+        # Possibly add more layers
+
+    def forward(self, x):
+        # Add forward step; connect layers and return output
+        # RNN returns (output, h_n)
+        rnn_out, h_n = self.rnn(...)
+        rnn_out = rnn_out[:, -1, :] # Select final timestep
+        x = self.fc1(...)
+        # Additional Linear layer
+        return ...
+
+    def predict(self, x):
+        # Add predict function; set model to evaluation mode and
+        # returns model output for given input
+        ...
 ```
 
 <!-- -->
 
 ```{python }
-# source_hidden
-# Suggested solution: simple RNN model
+# solution_hidden: Vanilla RNN model
 class AirlineRNN(nn.Module):
     def __init__(self, hidden_size=20, output_size=8):
         super().__init__()
@@ -236,13 +419,13 @@ class AirlineRNN(nn.Module):
             hidden_size=hidden_size,
             num_layers=1,
             batch_first=True,
-            nonlinearity="tanh"
+            nonlinearity="relu"
         )
         self.fc1 = nn.Linear(hidden_size, output_size)
         self.fc2 = nn.Linear(output_size, 1)
 
     def forward(self, x):
-        rnn_out, hidden = self.rnn(x)
+        rnn_out, h_n = self.rnn(x)
         # rnn_out shape: (batch_size, time_steps, hidden_size)
         # For single-layer RNN, take the last timestep output
         rnn_out = rnn_out[:, -1, :]  # Select final timestep
@@ -257,172 +440,165 @@ class AirlineRNN(nn.Module):
 
 <!-- -->
 
-Once you are happy with the configuration, initialize the model and
-choose an appropriate loss function and optimizer.
-
-```{python}
-device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
-print(f"Using {device} device")
-```
+Once you are happy with the configuration, initialize the model:
 
 ```{python }
 model = AirlineRNN()
-model.to(device)
 ```
-
-<!-- -->
-
-```{python }
-# source_hidden
-# Solution: loss function
-loss_fn = nn.MSELoss()
-```
-
-<!-- -->
-
-```{python }
-# source_hidden
-# Solution: loss function
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-```
-
-<!-- -->
 
 ### Training
 
-Now that we have the model components in place we define a training
-loop that will loop through our training samples. In each iteration,
-we let the model generate predictions and calculate the loss with
-respect to a loss function. The gradient of the loss with respect to
-the model parameters is then calculated with backward propagation,
-which is then passed on to and utilized by the optimizer to update
-weights that will hopefully improve network performance in the next
-epoch. To this end, we define an explicit training function:
+Now that we have the model components in place we can start training
+and testing our model. We make use of the utility functions defined in
+the preamble. In each training iteration, we let the model generate
+predictions and calculate the loss with respect to a loss function.
+The gradient of the loss with respect to the model parameters is then
+calculated with backward propagation, which is then passed on to and
+utilized by the optimizer to update weights that will hopefully
+improve network performance in the next epoch. To avoid overfitting,
+the loop adds a step that evaluates model performance on the test
+dataset.
+
+Before training the model, we define dataloaders for train and test
+datasets.
+
+```{python }
+train_loader = DataLoader(train_data)
+test_loader = DataLoader(test_data)
+```
+
+Next we choose an appropriate loss function and assign to variable
+`criterion`:
+
+```{python }
+#| eval: false
+criterion = nn...Loss()
+```
 
 <!-- -->
 
 ```{python }
-def train_loop(dataloader, model, loss_fn, optimizer, device, loginterval=None):
-    """Train model on data in dataloader subject to loss defined by
-    loss_fn and optimize parameters with optimizer."""
-    model.train()  # Set model to training mode
-    size = len(dataloader.dataset)
-    total_loss = 0
-
-    for batch, (X, y) in enumerate(dataloader):
-        X = X.to(device)
-        y = y.to(device)
-        output = model(X)
-        loss = loss_fn(output, y)
-
-        optimizer.zero_grad()
-        # Backpropagation
-        loss.backward()
-        # Optimization
-        optimizer.step()
-
-        total_loss += loss.item()
-
-        if loginterval is not None and batch % loginterval == 0:
-            loss, current = loss.item(), batch * batch_size + len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-
-    avg_loss = total_loss / len(dataloader)
-    return avg_loss
+# solution_hidden: criterion
+criterion = nn.MSELoss()
 ```
 
-To avoid overfitting, we also add a test function that evaluates model
-performance on the test dataset.
+<!-- -->
 
-```{python}
-def test_loop(dataloader, model, loss_fn, device, loginterval=None):
-    """Evaluate model performance on dataset provided by dataloader."""
-    model.eval()  # Set model to evaluation mode
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss = 0
-
-    # Make sure no gradients are calculated during test mode
-    with torch.no_grad():
-        for X, y in dataloader:
-            X = X.to(device)
-            y = y.to(device)
-            output = model(X)
-            test_loss += loss_fn(output, y).item()  # Access directly since we don't apply loss.backward()
-
-    test_loss /= num_batches
-    return test_loss
-```
-
-Before training the model, we define dataloaders for train and test datasets.
+Finally, set the optimizer to
+[SGD](https://docs.pytorch.org/docs/2.11/generated/torch.optim.SGD.html).
 
 ```{python }
-train_dataloader = DataLoader(train)
-test_dataloader = DataLoader(test)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 ```
+
+<!-- -->
+
+With loss and optimizer in place, we can train the network.
 
 ```{python }
-epochs = 200
-epoch_loginterval = 10
-# Dictionary to store validation metrics; use same keys as Keras
-metrics = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
-for t in range(epochs):
-    if (t+1) % epoch_loginterval == 0:
-        print(f"Epoch {t+1}/{epochs}\n-------------------------------")
-    loss = train_loop(train_dataloader, model, loss_fn, optimizer, device)
-    metrics["loss"].append(loss)
-    if t % epoch_loginterval == 0:
-        print(f"  Train: Loss: {loss:.4f}")
-    val_loss = test_loop(test_dataloader, model, loss_fn, device)
-    metrics["val_loss"].append(val_loss)
-    if t % epoch_loginterval == 0:
-        print(f"  Test: Val loss: {val_loss:>8f}")
-print("Done!")
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+print(f"Using {device} device")
+epochs = 400
+accuracy = torchmetrics.MeanSquaredError()
+liveplot = LivePlot()
+liveplot.fig.update_layout(width=1200, height=800, font_size=18)
+liveplot.increment(epochs)
+
+train(model=model,
+      train_loader=train_loader,
+      dev_loader=test_loader,
+      optimizer=optimizer,
+      criterion=criterion,
+      #metric=accuracy,
+      max_epochs=epochs,
+      liveplot=liveplot,
+      device=device)
 ```
 
-### Plotting
-
-We define a plotting function to visualize the training metrics.
-
-```{python}
-def plot_loss(metrics, figsize=(12, 6)):
-    """Plot loss metrics"""
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(metrics["loss"], label="train loss", color="red", alpha=0.8)
-    ax.plot(metrics["val_loss"], label="val loss", color="orange", alpha=0.8)
-    ax.set_title("model loss")
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("loss")
-    ax.legend()
-    plt.show()
-```
+We finish by defining a function to plot (rescaled) predictions and plot them.
 
 ```{python }
-plot_loss(metrics)
-```
-
-We also would like to visualize the predictions and original data.
-
-```{python }
-def plot_pred(train, test, model, figsize=(14, 8), rescale=True):
+def plot_pred(train_data, test_data, model, figsize=(14, 8), rescale=True):
     """Plot model predictions for train and test data, possibly rescaling y-axis"""
-    f = train.scaler.inverse_transform if rescale else lambda x: x
+    f = train_data.scaler.inverse_transform if rescale else lambda x: x
     fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(train.time, f(train.data), color="blue")
-    ax.plot(test.time, f(test.data), color="orange")
-    ax.plot(train.time[list(train.y_indices)],
-            f(model.predict(train.X.to(device)).cpu()).flatten(),
+    ax.plot(train_data.time, f(train_data.data), color="blue")
+    ax.plot(test_data.time, f(test_data.data), color="orange")
+    ax.plot(train_data.time[list(train_data.y_indices)],
+            f(model.predict(train_data.X.to(device)).cpu()).flatten(),
             "-o", color="green")
-    ax.plot(test.time[list(test.y_indices)],
-            f(model.predict(test.X.to(device)).cpu()).flatten(),
+    ax.plot(test_data.time[list(test_data.y_indices)],
+            f(model.predict(test_data.X.to(device)).cpu()).flatten(),
             "-*", color="red")
     ax.set_title("Model prediction")
     plt.show()
 ```
 
 ```{python }
-plot_pred(train, test, model)
+plot_pred(train_data, test_data, model)
 ```
+
+Depending on what your model is defined, you will get different
+outcomes, but it is likely that training has been unsuccessful. Can
+you think of ways to improve network learning?
+
+<!-- -->
+
+```{python }
+# solution_hidden: Improving network learning
+#
+# optimizer: Stochastic Gradient Descent is generally a poor choice
+# for RNNs for various reasons, including 1) vanishing gradient
+# problem 2) no adaptive learning rates
+#
+# learning rate: learning rate selection is critical for RNNs, where
+# too high a rate may produce oscillating behaviour or explosion of
+# loss
+#
+```
+
+<!-- -->
+
+### Improve training performance
+
+Revise the previous code blocks and see if you can improve training
+performance.
+
+<!-- -->
+
+```{python }
+# solution_hidden: Improved training
+model = AirlineRNN()
+train_loader = DataLoader(train_data)
+test_loader = DataLoader(test_data)
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+print(f"Using {device} device")
+epochs = 400
+accuracy = torchmetrics.MeanSquaredError()
+liveplot = LivePlot()
+liveplot.fig.update_layout(width=1200, height=800, font_size=18)
+liveplot.increment(epochs)
+
+train(model=model,
+      train_loader=train_loader,
+      dev_loader=test_loader,
+      optimizer=optimizer,
+      criterion=criterion,
+      #metric=accuracy,
+      max_epochs=epochs,
+      liveplot=liveplot,
+      device=device)
+```
+
+<!-- -->
+
+```{python }
+plot_pred(train_data, test_data, model)
+```
+
+<!-- -->
 
 ## Digression: RNN weights and network topology
 
@@ -472,7 +648,6 @@ Networks](https://machinelearningmastery.com/stacked-long-short-term-memory-netw
 If you have time, you can also try out the GRU layers for comparison.
 Do you notice any difference?
 
-
 ```{python}
 #| eval: false
 class AirlineLSTM(...):
@@ -483,8 +658,7 @@ class AirlineLSTM(...):
 <!-- -->
 
 ```{python }
-# source_hidden
-# Suggested solution: simple LSTM model
+# solution_hidden: Simple LSTM model
 class AirlineLSTM(nn.Module):
     def __init__(self, hidden_size=20, output_size=8, num_layers=2):
         super().__init__()
@@ -525,16 +699,14 @@ model.to(device)
 <!-- -->
 
 ```{python }
-# source_hidden
-# Solution: loss function
-loss_fn = nn.MSELoss()
+# solution_hidden: criterion
+criterion = nn.MSELoss()
 ```
 
 <!-- -->
 
 ```{python }
-# source_hidden
-# Solution: loss function
+# solution_hidden: Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 ```
 

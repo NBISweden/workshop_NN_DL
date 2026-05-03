@@ -2266,9 +2266,11 @@ print(model)
 
 :::: {.fragment }
 
-NB! In PyTorch, RNN input is a 3D tensor with shape `[timesteps, batch
-size, input size]` by default; use `batch_first=True` to reshape to
-`[batch size, timesteps, input size]`.
+NB! In PyTorch, RNN input is a 3D tensor with shape *(seq, batch,
+feature)* by default; set `batch_first=True` to reshape to *(batch,
+seq, feature)*. Here, *seq* = sequence length, *batch* = batch size,
+and *feature* = `input_size`, the number of expected features in the
+input *x*.
 
 ::::
 
