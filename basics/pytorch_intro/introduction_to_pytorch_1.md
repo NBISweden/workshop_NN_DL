@@ -530,7 +530,7 @@ for batch in dataset:
     features, labels = batch
     optimizer.zero_grad()
     prediction = model(features)
-    loss = loss_fn(prediction, label)
+    loss = criterion(prediction, label)
     loss.backward()
     optimizer.step()
 ```
@@ -685,6 +685,7 @@ for epoch in range(max_epochs):
     training_examples = 0
     model.train()
     for i, batch in enumerate(train_loader):
+        optimizer.zero_grad()
         x_batch, y_batch = batch
         x_batch = x_batch.to(device)
         y_hat = model(x_batch)

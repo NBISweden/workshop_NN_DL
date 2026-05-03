@@ -384,7 +384,7 @@ model.append(nn.Softmax()) # usually not necessary to have this as last layer!
 * Different types: 1D, 2D, 3D
 
 ```python
-import pytorch.nn as nn
+import torch.nn as nn
 
 m = nn.Conv1d(16, 33, 3, stride=2)
 ```
