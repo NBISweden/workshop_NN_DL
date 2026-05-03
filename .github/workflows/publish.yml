@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - rnn
-      - basics
     pull_request:
       branches:
         - '*'
