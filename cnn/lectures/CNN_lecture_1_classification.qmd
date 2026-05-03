@@ -8,10 +8,12 @@ format:
     incremental: false
     code-line-numbers: true
     highlight-style: github
+    toc: false
 execute:
   echo: true
   eval: false
 jupyter: python3
+description: Convolutions, pooling, BatchNorm, and CNN architectures (AlexNet, VGG16, ResNet) for image classification
 ---
 
 ## CNNs for computer vision

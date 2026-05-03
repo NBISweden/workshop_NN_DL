@@ -8,10 +8,12 @@ format:
     incremental: false
     code-line-numbers: true
     highlight-style: github
+    toc: false
 execute:
   echo: true
   eval: false
 jupyter: python3
+description: Object localisation, detection (YOLO, RetinaNet, Faster R-CNN), and semantic segmentation (U-Net) with CNNs
 ---
 
 ## CNNs for computer vision
