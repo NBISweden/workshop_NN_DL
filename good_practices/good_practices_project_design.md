@@ -164,7 +164,7 @@ And therein lies the main issue:
 * COVIDx dataset
 * Training set: chest X-rays of 66 positive COVID results, 120 random non-COVID examples
 * 2-class classifier based on ResNet50 Featurizer
-* Perfect validation results! Great!
+* Perfect validation/development results! Great!
 
 <!-- #endregion -->
 
@@ -189,15 +189,15 @@ Let's look at activations map and see more in detail
 <!-- #endregion -->
 
 <!-- #region editable=true slideshow={"slide_type": ""} -->
-## Example: normalizing inputs on train/validation/test data
+## Example: normalizing inputs on train/development/test data
 
-* If you normalize on validation data as well you are getting information you wouldn't have in a real scenario
+* If you normalize on development and test data as well you are getting information you wouldn't have in a real scenario
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
 # Lab: looking for target leakage in a text dataset (~1 h.)
 
-Jupyter notebook (download from canvas module page)
+Jupyter notebook (`good_practices/labs/target_leakage/investigating_target_leakage.ipynb`)
 
 Visualize the layers of a NN for Natural Language Processing:
 
@@ -207,16 +207,16 @@ Visualize the layers of a NN for Natural Language Processing:
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
-# Know your train/validation/test sets
+# Know your train/development/test sets
 
 * A _train set_ is a set of samples used to tune the NN weights
-* A _validation set_ is a set used to tune the NN hyperparameters:
+* A _validation or development set_ is a set used to tune the NN hyperparameters:
     * Type of model (maybe not even a NN)
     * Number of layers
     * Number of neurons per layer
     * Type of layers
     * Optimizer
-    * Validation set results are NOT the ones that will get published
+    * Development set results are NOT the ones that will get published
     * Doesn't matter if you cross-validate
 * A _test set_ is a secluded set of samples that are used only once to test the final model
     * Give an idea of how well the model generalizes to unseen data (results go on paper)
@@ -236,7 +236,7 @@ Visualize the layers of a NN for Natural Language Processing:
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Knowing what each set does is half the battle
 
-Train, validation and test sets cannot be too similar to each other, or you will not be able to tell if the network is generalizing or just memorizing
+Train, development and test sets cannot be too similar to each other, or you will not be able to tell if the network is generalizing or just memorizing
 
 * _How_ different they should be depends on what you're trying to achieve
 * Come up with a similarity measure
@@ -273,7 +273,7 @@ Train, validation and test sets cannot be too similar to each other, or you will
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
 ## Another example, protein structure prediction
 
-* For some reason most researchers try to split train/validation/test by sequence similarity
+* For some reason most researchers try to split train/development/test by sequence similarity
 * If two proteins have <25% identical amino acids, they are deemed different enough
 * But protein families/superfamilies contain many proteins that share no detectable sequence similarity
 * Sequence similarity is not the right metric!
@@ -377,7 +377,7 @@ Main avenues:
 <!-- #region slideshow={"slide_type": "skip"} editable=true -->
 ## Regularizers
 
-You thought we were done with Keras api explanations, but we ain't
+You thought we were done with PyTorch api explanations, but we're not!
 
 * Regularizers are used to constrain the training so that weights don't get too big (a cause of overfitting)
 * L1 regularization (Lasso): 
@@ -398,7 +398,14 @@ def train(data_loader):
 
         # Adding L1 regularization
         l1_norm = sum(p.abs().sum() for p in model.parameters())
-        loss += 0.0001 * l1_norm
+        loss += 1e-4 * l1_norm
+```
+
+```python
+# L2 regularization is done with the weight decay parameter
+learning_rate = 1e-3
+weight_decay = 1e-4
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 ```
 
 <!-- #region slideshow={"slide_type": "skip"} editable=true -->
