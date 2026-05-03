@@ -1,3 +1,4 @@
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -77,6 +78,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
@@ -209,6 +211,12 @@ __marimo__/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# misc
+*.odp
+*.pic
+*.tsv
+*.zip
 
 /.quarto/
 **/*.quarto_ipynb

@@ -12,6 +12,9 @@ listing:
     sort: false
     contents:
       - rnn/lectures/index.qmd
+      - basics/pytorch_intro/introduction_to_pytorch_1.md
+      - basics/pytorch_intro/introduction_to_pytorch_2.md
+      - good_practices/good_practices_project_design.md
   - id: lab-listings
     type: table
     grid-columns: 4
@@ -26,6 +29,9 @@ listing:
     contents:
       - rnn/labs/airplanes.qmd
       - rnn/labs/alphabet.qmd
+      - basics/labs/lab_introduction_to_pytorch.qmd
+      - good_practices/labs/target_leakage/investigating_target_leakage.qmd
+      - good_practices/labs/data_splits/rigorous_train_validation_splitting.qmd
 date: ""
 toc: false
 sidebar: true

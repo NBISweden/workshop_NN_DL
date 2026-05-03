@@ -3,3 +3,6 @@
 project:
   render:
     - rnn/lectures/index.qmd
+    - basics/pytorch_intro/introduction_to_pytorch_1.md
+    - basics/pytorch_intro/introduction_to_pytorch_2.md
+    - good_practices/good_practices_project_design.md
