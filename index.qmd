@@ -15,6 +15,8 @@ listing:
       - basics/pytorch_intro/introduction_to_pytorch_1.md
       - basics/pytorch_intro/introduction_to_pytorch_2.md
       - good_practices/good_practices_project_design.md
+      - cnn/lectures/CNN_lecture_1_classification.qmd
+      - cnn/lectures/CNN_lecture_2_segmentation.qmd
   - id: lab-listings
     type: table
     grid-columns: 4
@@ -32,6 +34,8 @@ listing:
       - basics/labs/lab_introduction_to_pytorch.qmd
       - good_practices/labs/target_leakage/investigating_target_leakage.qmd
       - good_practices/labs/data_splits/rigorous_train_validation_splitting.qmd
+      - cnn/labs/lab_classification.qmd
+      - cnn/labs/lab_segmentation.qmd
 date: ""
 toc: false
 sidebar: true

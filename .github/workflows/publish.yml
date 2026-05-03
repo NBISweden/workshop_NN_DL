@@ -6,9 +6,10 @@ on:
       - main
       - rnn
       - basics
-    pull_request:
-      branches:
-        - '*'
+      - cnn
+  pull_request:
+    branches:
+      - '*'
 
 jobs:
   build:
