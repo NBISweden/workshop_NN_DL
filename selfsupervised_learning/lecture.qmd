@@ -1,5 +1,5 @@
 ---
-title: "Contrastive learning"
+title: "Representation learning"
 author: "Erik Ylipää (erik.ylipaa@liu.se)"
 date: today
 format:
