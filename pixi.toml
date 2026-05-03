@@ -89,7 +89,7 @@ cmd = "bash scripts/fix_mds.sh"
 default-environment = "teachers"
 
 [tasks.render_all]
-cmd = "bash scripts/render.sh --profile all --to html"
+cmd = "quarto render --profile all --to html $QUARTO_META"
 default-environment = "teachers"
 depends-on = ["fix_mds"]
 
@@ -99,12 +99,12 @@ default-environment = "teachers"
 depends-on = ["render_all"]
 
 [tasks.render_ipynb]
-cmd = "bash scripts/render.sh --profile ipynb --to ipynb --no-clean"
+cmd = "quarto render --profile ipynb --to ipynb --no-clean $QUARTO_META"
 default-environment="teachers"
 depends-on = ["sync_sitelibs"]
 
 [tasks.render_revealjs]
-cmd = "bash scripts/render.sh --profile revealjs --no-clean"
+cmd = "quarto render --profile revealjs --no-clean $QUARTO_META"
 default-environment = "teachers"
 depends-on = ["render_ipynb"]
 

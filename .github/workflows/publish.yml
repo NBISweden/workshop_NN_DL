@@ -36,6 +36,7 @@ jobs:
           sudo apt-get install texlive texlive-latex-extra
 
       - run: echo "TEXINPUTS=$TEXINPUTS:$GITHUB_WORKSPACE/rnn" >> $GITHUB_ENV
+      - run: echo "RETICULATE_PYTHON=${GITHUB_WORKSPACE}/.pixi/envs/teachers/bin/python" >> $GITHUB_ENV
 
       - name: Render Quarto pages
         run: |
