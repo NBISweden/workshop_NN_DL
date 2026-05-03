@@ -13,7 +13,7 @@ jupyter:
     language: python
     name: python3
 description: Target Leakage lab
-notebook-url: "[investigating_target_leakage.ipynb](good_practices/labs/target_leakage/investigating_target_leakage.ipynb)"
+notebook-url: '[investigating_target_leakage.ipynb](good_practices/labs/target_leakage/investigating_target_leakage.ipynb)'
 ---
 
 
@@ -63,6 +63,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 
 import torch
 import torch.nn as nn
@@ -438,7 +439,7 @@ points_pca = pca.fit_transform(embedded_words)
 ```{python}
 #| editable: true
 #| slideshow: {slide_type: ''}
-fig = px.scatter(x=points_pca[:,0], y=points_tsne[:,1], text=[word_dict[i] if i < 8000 else "" for i in range(n_words)], width=2400, height=800)
+fig = px.scatter(x=points_pca[:,0], y=points_pca[:,1], text=[word_dict[i] if i < 8000 else "" for i in range(n_words)], width=2400, height=800)
 fig.update_traces(textposition='top center')
 fig.show()
 ```
