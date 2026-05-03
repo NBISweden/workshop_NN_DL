@@ -10,7 +10,7 @@ format:
     code-fold: true
 description: Representation learning lab.
 execute:
-  eval: true
+  eval: false
 ---
 
 ## Running on colab
@@ -450,11 +450,6 @@ print("dev transfer number of examples: ", len(dev_data_b))
 print("dev \"unlabeled\" number of examples: ", len(dev_unlabeled))
 ```
 
-```{python}
-foo, bar = next(iter(train_loader))
-foo.shape
-```
-
 # Self-supervised learning
 
 Now that the data is prepared, we'll train a simple Convolutional Neural Network to solve the problem.
@@ -552,17 +547,8 @@ for node in eval_nodes:
 ```
 
 The function traces the modules in the network, and creates one list for nodes used in training and one for evaluation. We're interested in the evaluation list because we want to use the module in evaluation mode.
-The modules with the names `encoder_head.[0-2]` are the ones we're interested in, they correspond to the layers we used to construct the model above:
-
-```python
-        self.encoder_head = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(128 * 3 * 3, latent_dim),
-            nn.ReLU(),
-        )
-```
-
-So the features directly from the conv layers correspond to the Flatten node, which is `encoder_head.0`. We also might want to inspect the features after the nonlinearity (the ones used as input to the classifier). These are the results after the ReLU, so correspond to `encoder_head.2`. Knowing the names of the nodes we can now create a feature extractor with our module as a base:
+The modules with the names `encoder_head.[0-2]` are the ones we're interested in, they correspond to the layers we used to construct the model above.
+The features directly from the conv layers correspond to the Flatten node, which is `encoder_head.0`. We also might want to inspect the features after the nonlinearity (the ones used as input to the classifier). These are the results after the ReLU, so correspond to `encoder_head.2`. Knowing the names of the nodes we can now create a feature extractor with our module as a base:
 
 ```{python}
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -571,7 +557,8 @@ feature_extractor = create_feature_extractor(cnn_model, return_nodes={'encoder_h
 
 We now have created a feature extractor for our model. It will behave like our original model, but instead of returning the result of the `forward()` method like our base model, it will return a dictionary containing the keys `flat_conv_features` and `encoder_features` with the vectors corresponding to the results of those nodes. Let's use this to embed our test exampels.
 
- ```{python}
+
+```{python}
 test_loader = DataLoader(test_data, batch_size=batch_size)
 conv_features = []
 encoder_features = []
@@ -837,7 +824,7 @@ feature_extractor = create_feature_extractor(contrastive_cnn_model, return_nodes
 
 We now have created a feature extractor for our model. It will behave like our original model, but instead of returning the result of the `forward()` method like our base model, it will return a dictionary containing the keys `flat_conv_features` and `encoder_features` with the vectors corresponding to the results of those nodes. Let's use this to embed our test exampels.
 
- ```{python}
+```{python}
 test_loader = DataLoader(test_data, batch_size=batch_size)
 conv_features = []
 encoder_features = []
