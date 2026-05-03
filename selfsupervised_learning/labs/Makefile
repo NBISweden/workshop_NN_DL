@@ -6,7 +6,7 @@ NOTEBOOKS = $(LABS:.qmd=.ipynb)
 all: $(NOTEBOOKS)
 
 %.ipynb: %.qmd
-	quarto render $< --to ipynb --output $@
+	quarto render $< --to ipynb --output $@ --output-dir .
 
 clean:
 	rm -f $(NOTEBOOKS)
