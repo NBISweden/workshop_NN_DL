@@ -450,7 +450,7 @@ print("dev transfer number of examples: ", len(dev_data_b))
 print("dev \"unlabeled\" number of examples: ", len(dev_unlabeled))
 ```
 
-# Self-supervised learning
+# Supervised learning
 
 Now that the data is prepared, we'll train a simple Convolutional Neural Network to solve the problem.
 
@@ -802,7 +802,7 @@ supcon_loss(y_hat, y.squeeze().to(device))
 train(model=contrastive_cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=20, device=device, liveplot=liveplot)
 ```
 
-### Inspect representations
+## Inspect representations
 
 
 Like before we can construct a feature extractor from this model
@@ -882,24 +882,18 @@ liveplot = LivePlot()
 train(model=contrastive_cnn_model, train_loader=train_loader, dev_loader=dev_loader, optimizer=optimizer, criterion=criterion, max_epochs=10, device=device, liveplot=liveplot)
 ```
 
-### Evaluate transferred results
+## Evaluate transferred results
 
 ```{python}
 plot_confusion_matrix(contrastive_cnn_model, dev_data_b, title="Confusion matrix — dev set (contrastive transfer learning)")
 ```
 
 
-# Self-supervised representation learning
+# Self-supervised learning
 
 We've seen how supervised learning is able to learn representations, but relies on labeled data. We will look at how we can use unlabeled data to learn representations using supervised learning.
 
-## Lab session: shallow representations
-
-We'll start with one of the fundamental methods for learning representations: Principal Component Analysis (PCA). PCA is a linear method that finds the directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
-
-We will treat each of these images as a vector, by just flattening the 2D image into a 1D vector. 
-
-# Principal Component Analysis (PCA)
+## Principal Component Analysis (PCA)
 
 A classical form of representation learning is Principal Component Analysis (PCA). PCA finds the orthogonal directions of maximum variance in the data, and projects the data onto those directions. This can be useful for dimensionality reduction, visualization, and as a preprocessing step for other machine learning algorithms.
 
@@ -969,7 +963,7 @@ plt.show()
 
 In this sense, projecting the data onto a set of principal components changes how it's represented, and is an optimal choice if the goal is to preserve as much variance as possible with a linear projection. Is's important to emphasize that PCA is a linear method, and may not capture complex nonlinear relationships in the data. We'll look at how we can use a close analogue for PCA  deep learning-based representation learning methods later in this lab.
 
-## PCA on our medical dataset
+### PCA on our medical dataset
 
 We'll now see how we can apply PCA to our dataset. We will first flatten the images into vectors, and then apply PCA to find the principal components of the data. We can then visualize the data in the space of the first two principal components to see if there are any interesting patterns or clusters.
 
@@ -1034,7 +1028,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Exercise:
+### Exercise:
 Experiment with  different number of principal components and see how it affects the quality of the reconstruction. You can also try applying the fitted PCA (e.g.
  `pca.transform(X_dev)`) to the development or test set, to see how well the components learned from the training set generalize to new data. At what value do you no longer see a difference between the original and the approximated images? 
 What happens when you set `k=1`?
@@ -1055,7 +1049,7 @@ plt.title('Variance explained by principal components')
 ```
 
 
-## Visualzing the latent space
+### Visualzing the latent space
 
 
 
@@ -1361,7 +1355,7 @@ ae_features = np.concatenate(ae_features)
 visualize_latent_space(ae_features, feature_labels, "Autoencoder projections")
 ```
 
-## Transfer learning
+### Transfer learning
 
 Like the supervised and contrastive models, we can use the encoder of the trained autoencoder as a feature extractor for a new task. We replace the decoder with a linear classifier and train only that head on the held-out labels. The encoder weights are frozen during this first phase, so the randomly initialized classifier doesn't corrupt the learned representations before it has had a chance to warm up.
 
@@ -1392,39 +1386,6 @@ train(model=ae_model, train_loader=train_loader, dev_loader=dev_loader, optimize
 
 ```{python}
 plot_confusion_matrix(ae_model, dev_data_b, title="Confusion matrix — dev set (autoencoder transfer - after training)")
-```
-
-## How does size of latent space affect representation learned?
-
-```{python}
-batch_size = 64
-
-train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True)
-dev_loader = DataLoader(dev_data, batch_size=batch_size, shuffle=False, drop_last=False)
-input_dim = X_train.shape[1]
-# We make the latend and hidden dimension the same size as the input
-latent_dim = input_dim
-hidden_dim = input_dim
-
-full_size_ae_model = Autoencoder(input_dim=input_dim, encoder_dims=[hidden_dim], decoder_dims=[hidden_dim], latent_dim=latent_dim)
-
-from livelossplot import PlotLosses
-plotlosses = PlotLosses()
-```
-
-
-```{python}
-# Each time you run this cell, the model will continue training `max_epochs` from its previous state, so you can experiment with training for different numbers of epochs by running this cell multiple times.
-train(full_size_ae_model, train_loader, dev_loader, max_epochs=100, learning_rate=1e-3, plotlosses=plotlosses)
-```
-
-
-```{python}
-visualized_reconstruction(X_train, full_size_ae_model, n_examples=5)
-```
-
-```{python}
-visualize_latent_space(X_train, y_train, full_size_ae_model)
 ```
 
 
@@ -1582,7 +1543,7 @@ conv_ae_features = np.concatenate(conv_ae_features)
 visualize_latent_space(conv_ae_features, feature_labels, "Conv Autoencoder projections")
 ```
 
-## Transfer learning
+### Transfer learning
 
 Like the other models, we can use the trained convolutional encoder as a feature extractor for the held-out classes by attaching a linear classifier and training only that head.
 
@@ -1615,13 +1576,13 @@ train(model=conv_ae_model, train_loader=train_loader, dev_loader=dev_loader, opt
 plot_confusion_matrix(conv_ae_model, dev_data_b, title="Confusion matrix — dev set (conv AE transfer - after training)")
 ```
 
-# SimCLR
+## SimCLR
 
 SimCLR is a self-supervised contrastive learning method that learns representations without any labels. The key idea is simple: for each image, generate two differently augmented views, then train the network to map both views of the same image close together in embedding space while pushing apart views from different images. The only source of learning signal is the augmentation — the model must learn invariances to crops, flips, color changes, and blur in order to produce consistent representations.
 
 This is in contrast to the supervised contrastive approach we saw earlier, which used label information to define which examples should be attracted. SimCLR defines positives purely from the data itself, making it applicable to the unlabeled portion of our dataset.
 
-## Data augmentation
+### Data augmentation
 
 The augmentation strategy is central to SimCLR — too weak and the task is trivially solved, too strong and the positives become unrecognizable. For 28×28 medical images we use random crops, flips, color jitter, and a small Gaussian blur.
 
@@ -1657,7 +1618,7 @@ simclr_train_data = SimCLRDataset(train_unlabeled, simclr_augment)
 simclr_dev_data   = SimCLRDataset(dev_unlabeled,   simclr_augment)
 ```
 
-## NT-Xent loss
+### NT-Xent loss
 
 The NT-Xent (Normalized Temperature-scaled Cross Entropy) loss treats each pair of views from the same image as a positive pair and all other views in the batch as negatives. With a batch of $B$ images we have $2B$ views total, giving $2(B-1)$ negatives per anchor.
 
@@ -1691,7 +1652,7 @@ def nt_xent_loss(z1, z2, temperature=0.5):
     return F.cross_entropy(sim, labels)
 ```
 
-## Model
+### Model
 
 The architecture mirrors `ContrastiveConvNet`: a shared convolutional encoder followed by a small projection MLP. The projection head is only used during self-supervised training; for transfer learning it is replaced by a linear classifier via `reset_head`.
 
@@ -1737,7 +1698,7 @@ class SimCLRConvNet(nn.Module):
         return F.normalize(self.bn(projection), dim=1)
 ```
 
-## Training
+### Training
 
 SimCLR's training loop differs from the supervised case: each batch yields two views rather than `(image, label)`, so we use a dedicated loop here.
 
@@ -1797,7 +1758,7 @@ train_simclr(model=simclr_model, train_loader=train_loader, dev_loader=dev_loade
              optimizer=optimizer, temperature=0.5, max_epochs=20, device=device, liveplot=liveplot)
 ```
 
-## Inspect representations
+### Inspect representations
 
 ```{python}
 from torchvision.models.feature_extraction import get_graph_node_names
@@ -1844,7 +1805,7 @@ visualize_latent_space(simclr_conv_features,    feature_labels, f"SimCLR — con
 visualize_latent_space(simclr_encoder_features, feature_labels, f"SimCLR — encoder features (held-out labels {held_out_labels})")
 ```
 
-## Transfer learning
+### Transfer learning
 
 As with the other models, we freeze the encoder and train only a freshly initialised linear head on the held-out labels.
 
@@ -2196,7 +2157,7 @@ train(model=dino_student, train_loader=train_loader, dev_loader=dev_loader,
 plot_confusion_matrix(dino_student, dev_data_b, title="Confusion matrix — dev set (DINO transfer - after training)")
 ```
 
-# CLIP
+# Multimodel learning - CLIP
 
 CLIP (Contrastive Language–Image Pre-training) was trained by OpenAI on 400 million image–text pairs scraped from the internet. Like SimCLR, it uses contrastive learning — but across two *modalities*: images and text. The model learns to pull together the embedding of an image and its matching caption, while pushing apart mismatched pairs. The result is a visual encoder that has seen an enormous breadth of concepts, even if it has never seen a single explicit class label.
 
