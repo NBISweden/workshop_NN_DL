@@ -31,7 +31,7 @@ To run this notebook on Google Colab:
 4. Download and unzip the data by running the following in a new cell:
 
 ```python
-!wget https://raw.githubusercontent.com/NBISweden/workshop_NN_DL/cnn/cnn/labs/data.zip
+!wget https://raw.githubusercontent.com/NBISweden/workshop_NN_DL/cnn/labs/data.zip
 !unzip data.zip
 ```
 
