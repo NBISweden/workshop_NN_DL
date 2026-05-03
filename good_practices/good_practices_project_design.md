@@ -197,7 +197,7 @@ Let's look at activations map and see more in detail
 <!-- #region slideshow={"slide_type": "slide"} editable=true -->
 # Lab: looking for target leakage in a text dataset (~1 h.)
 
-Jupyter notebook (download from canvas module page)
+Jupyter notebook (`good_practices/labs/target_leakage/investigating_target_leakage.ipynb`)
 
 Visualize the layers of a NN for Natural Language Processing:
 
@@ -377,7 +377,7 @@ Main avenues:
 <!-- #region slideshow={"slide_type": "skip"} editable=true -->
 ## Regularizers
 
-You thought we were done with Keras api explanations, but we ain't
+You thought we were done with PyTorch api explanations, but we're not!
 
 * Regularizers are used to constrain the training so that weights don't get too big (a cause of overfitting)
 * L1 regularization (Lasso): 
@@ -398,7 +398,14 @@ def train(data_loader):
 
         # Adding L1 regularization
         l1_norm = sum(p.abs().sum() for p in model.parameters())
-        loss += 0.0001 * l1_norm
+        loss += 1e-4 * l1_norm
+```
+
+```python
+# L2 regularization is done with the weight decay parameter
+learning_rate = 1e-3
+weight_decay = 1e-4
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 ```
 
 <!-- #region slideshow={"slide_type": "skip"} editable=true -->
