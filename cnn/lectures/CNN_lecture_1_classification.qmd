@@ -368,7 +368,7 @@ Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient
 
 ## Grad-CAM — example
 
-![](illustrations/gradcam.webp){fig-align="center" width="60%"}
+![](illustrations/gradcam.png){fig-align="center" width="60%"}
 
 # Architectures
 

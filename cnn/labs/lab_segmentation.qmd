@@ -2,6 +2,7 @@
 title: 'CNN Lab 2: Segmentation of Human Blood Cells using PyTorch'
 jupyter:
   jupytext:
+    formats: ipynb,qmd:quarto
     text_representation:
       extension: .qmd
       format_name: quarto
@@ -15,18 +16,24 @@ format:
   html:
     code-fold: true
 description: Pixel-wise classification of blood cell images with a U-Net in PyTorch, then the same task with a VGG16-backboned U-Net from segmentation_models_pytorch.
+notebook-url: "[lab_segmentation.ipynb](cnn/labs/lab_segmentation.ipynb)"
 execute:
-  eval: true
+  eval: false
 ---
 
 ## Running on colab
 
-You can use this
-[link](https://colab.research.google.com/github/NBISweden/workshop_NN_DL/blob/cnn/CNN/labs/lab_segmentation.ipynb)
-to run the notebook on Google Colab. If you do so, it's advised that
-you first make a copy to your own Google Drive before starting your
-work on the notebook. Otherwise changes you make to the notebook will
-not be saved.
+To run this notebook on Google Colab:
+
+1. Download the notebook from [this link](https://nbisweden.github.io/workshop_NN_DL/cnn/labs/lab_segmentation.ipynb).
+2. Go to [colab.research.google.com](https://colab.research.google.com), then **File → Open notebook → Upload** and select the downloaded file.
+3. Make a copy to your own Google Drive before starting your work, so that your changes are saved.
+4. Download and unzip the data by running the following in a new cell:
+
+```python
+!wget https://raw.githubusercontent.com/NBISweden/workshop_NN_DL/cnn/cnn/labs/data.zip
+!unzip data.zip
+```
 
 # Segmentation of Human Blood Cells using Convolutional Neural Networks
 
