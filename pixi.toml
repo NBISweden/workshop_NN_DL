@@ -63,6 +63,7 @@ open-clip-torch = ">=2.24.0, <3"
 [feature.pythonlibs.dependencies]
 plotly = ">=6.6.0,<7"
 anywidget = ">=0.10.0,<0.11"
+manim = ">=0.20.1,<0.21"
 
 [feature.rlibs.dependencies]
 r-base = "*"
