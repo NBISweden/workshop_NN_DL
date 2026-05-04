@@ -3,3 +3,4 @@
 project:
   render:
     - rnn/lectures/index.qmd
+    - selfsupervised_learning/lecture.qmd
