@@ -1,3 +1,4 @@
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -77,6 +78,8 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
+.jupyter_cache
 
 # IPython
 profile_default/
@@ -151,8 +154,13 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
+# Site build artifacts
 /site
+_site
+_site_libs*
+_extensions
+index_cache
+index_files
 
 # mypy
 .mypy_cache/
@@ -210,13 +218,15 @@ __marimo__/
 .pixi/*
 !.pixi/config.toml
 
-_extensions
+# misc
+*.odp
+*.pic
+*.tsv
+*.zip
+
 /.quarto/
 **/*.quarto_ipynb
 *.ipynb
 
-# Don't commit the built site
-_site
-_site_libs*
 
 

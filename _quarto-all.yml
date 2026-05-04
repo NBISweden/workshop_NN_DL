@@ -6,4 +6,14 @@ project:
     - rnn/lectures/index.qmd
     - rnn/labs/alphabet.qmd
     - rnn/labs/airplanes.qmd
+    - basics/pytorch_intro/introduction_to_pytorch_1.md
+    - basics/pytorch_intro/introduction_to_pytorch_2.md
+    - basics/labs/lab_introduction_to_pytorch.qmd
+    - good_practices/good_practices_project_design.md
+    - good_practices/labs/target_leakage/investigating_target_leakage.qmd
+    - good_practices/labs/data_splits/rigorous_train_validation_splitting.qmd
+    - cnn/labs/lab_classification.qmd
+    - cnn/labs/lab_segmentation.qmd
+    - cnn/lectures/CNN_lecture_1_classification.qmd
+    - cnn/lectures/CNN_lecture_2_segmentation.qmd    
     - representation_learning/index.qmd
