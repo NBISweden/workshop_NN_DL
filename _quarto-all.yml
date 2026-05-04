@@ -17,3 +17,4 @@ project:
     - cnn/lectures/CNN_lecture_1_classification.qmd
     - cnn/lectures/CNN_lecture_2_segmentation.qmd    
     - representation_learning/index.qmd
+    - representation_learning/labs/representation_learning.qmd
