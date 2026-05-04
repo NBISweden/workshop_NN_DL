@@ -3,7 +3,7 @@ title: "Representation learning"
 author: "Erik Ylipää (erik.ylipaa@liu.se)"
 date: today
 description: Introduction to representation learning and self-supervised learning
-session: SSL
+session: Representation Learning
 format:
   nbis-quarto-revealjs:
     footer: "Representation learning"
