@@ -79,6 +79,7 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+.jupyter_cache
 
 # IPython
 profile_default/
@@ -155,6 +156,10 @@ venv.bak/
 
 # mkdocs documentation
 /site
+/_site
+/_extensions
+index_cache
+index_files
 
 # mypy
 .mypy_cache/

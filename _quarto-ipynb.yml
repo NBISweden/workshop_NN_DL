@@ -7,5 +7,7 @@ project:
     - basics/labs/lab_introduction_to_pytorch.qmd
     - good_practices/labs/target_leakage/investigating_target_leakage.qmd
     - good_practices/labs/data_splits/rigorous_train_validation_splitting.qmd
+    - cnn/labs/lab_classification.qmd
+    - cnn/labs/lab_segmentation.qmd
   post-render:  # Remove <!-- --> blocks and hide source_hidden blocks
     - scripts/post-render.sh
