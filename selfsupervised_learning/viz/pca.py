@@ -10,7 +10,7 @@ Animation beats:
 Scene class : PCAScene
 Embed helper: pca_visualization()
 """
-from pathlib import Path
+
 
 import numpy as np
 import manim
@@ -300,45 +300,7 @@ class PCAScene(Scene):
 
 
 # ── Embed helper (Jupyter / Quarto) ──────────────────────────────────────────
-_MIME_TYPES = {
-    ".mp4":  "video/mp4",
-    ".webm": "video/webm",
-    ".mov":  "video/quicktime",
-    ".gif":  "image/gif",
-}
-
-
 def pca_visualization(width: int = PIXEL_WIDTH) -> None:
-    """Embed the pre-rendered PCAScene inline.
-
-    The scene must have been rendered first via ``make pca``.
-    """
-    from IPython.display import HTML, display as _display
-
-    media_root = Path(__file__).parent.parent / "media"
-    matches = [
-        p for p in media_root.rglob("PCAScene.*")
-        if p.suffix in _MIME_TYPES
-    ]
-    if not matches:
-        raise FileNotFoundError(
-            "No PCAScene render found under media/. "
-            "Run 'make pca' before rendering the slides."
-        )
-    media_path = max(matches, key=lambda p: p.stat().st_mtime)
-    try:
-        rel = media_path.relative_to(Path.cwd())
-    except ValueError:
-        rel = media_path
-
-    mime = _MIME_TYPES[media_path.suffix]
-    if media_path.suffix == ".gif":
-        html = f'<img src="{rel}" width="{width}" style="display:block;margin:auto">'
-    else:
-        html = (
-            f'<video width="{width}" autoplay loop muted playsinline controls '
-            f'style="display:block;margin:auto">'
-            f'<source src="{rel}" type="{mime}">'
-            f"</video>"
-        )
-    _display(HTML(html))
+    """Embed the pre-rendered PCAScene inline."""
+    from ._media import _embed_render
+    _embed_render("PCAScene", width, __file__)

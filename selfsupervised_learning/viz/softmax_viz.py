@@ -229,42 +229,7 @@ class SoftmaxScene(Scene):
         self.wait(4.0)
 
 
-# ── Display helper (Quarto / Jupyter) ─────────────────────────────────────────
-
-_MIME = {
-    ".mp4":  "video/mp4",
-    ".webm": "video/webm",
-    ".mov":  "video/quicktime",
-    ".gif":  "image/gif",
-}
-
-
 def show_softmax(width: int = 800) -> None:
     """Embed the pre-rendered SoftmaxScene inline (Jupyter / Quarto)."""
-    from pathlib import Path
-    from IPython.display import HTML, display as _display
-
-    media_root = Path(__file__).parent.parent / "media"
-    matches = [p for p in media_root.rglob("SoftmaxScene.*") if p.suffix in _MIME]
-    if not matches:
-        raise FileNotFoundError(
-            "No SoftmaxScene render found under media/. "
-            "Run 'make softmax' (or cache + render) first."
-        )
-    path = max(matches, key=lambda p: p.stat().st_mtime)
-    try:
-        rel = path.relative_to(Path.cwd())
-    except ValueError:
-        rel = path
-
-    mime = _MIME[path.suffix]
-    if path.suffix == ".gif":
-        html = f'<img src="{rel}" width="{width}" style="display:block;margin:auto">'
-    else:
-        html = (
-            f'<video width="{width}" autoplay loop muted playsinline controls '
-            f'style="display:block;margin:auto">'
-            f'<source src="{rel}" type="{mime}">'
-            f"</video>"
-        )
-    _display(HTML(html))
+    from ._media import _embed_render
+    _embed_render("SoftmaxScene", width, __file__)

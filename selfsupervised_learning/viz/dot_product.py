@@ -139,54 +139,7 @@ class DotProductScene(Scene):
         self.wait(5.0)
 
 
-# ── Display helper (used in Quarto cells) ────────────────────────────────────
-
-_MIME_TYPES = {
-    ".mp4":  "video/mp4",
-    ".webm": "video/webm",
-    ".mov":  "video/quicktime",
-    ".gif":  "image/gif",
-}
-
-
 def show_dot_product(width: int = 700) -> None:
-    """Embed the pre-rendered DotProductScene inline (Jupyter / Quarto).
-
-    Accepts any format produced by Manim (mp4, webm, mov, gif).
-    The most recently modified file is used, so switching FORMAT in the
-    Makefile and re-running ``make media`` will automatically pick up the
-    new output.  The video must have been rendered first via ``make media``.
-    """
-    from pathlib import Path
-    from IPython.display import HTML, display as _display
-
-    media_root = Path(__file__).parent.parent / "media"
-    matches = [
-        p for p in media_root.rglob("DotProductScene.*")
-        if p.suffix in _MIME_TYPES
-    ]
-    if not matches:
-        raise FileNotFoundError(
-            f"No DotProductScene render found under media/. "
-            f"Run 'make media' (or 'make') before rendering the slides."
-        )
-    media_path = max(matches, key=lambda p: p.stat().st_mtime)
-    try:
-        rel = media_path.relative_to(Path.cwd())
-    except ValueError:
-        rel = media_path
-
-    mime = _MIME_TYPES[media_path.suffix]
-    if media_path.suffix == ".gif":
-        html = (
-            f'<img src="{rel}" width="{width}" '
-            f'style="display:block;margin:auto">'
-        )
-    else:
-        html = (
-            f'<video width="{width}" autoplay loop muted playsinline controls '
-            f'style="display:block;margin:auto">'
-            f'<source src="{rel}" type="{mime}">'
-            f"</video>"
-        )
-    _display(HTML(html))
+    """Embed the pre-rendered DotProductScene inline (Jupyter / Quarto)."""
+    from ._media import _embed_render
+    _embed_render("DotProductScene", width, __file__)

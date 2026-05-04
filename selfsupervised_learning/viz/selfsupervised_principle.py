@@ -12,7 +12,7 @@ A pseudo-3-D time-volume block cycles through six prediction strategies:
 Scene class: SelfsupervisedPrincipleScene
 Embed helper: selfsupervised_principle_visualization()
 """
-from pathlib import Path
+
 
 import numpy as np
 import manim
@@ -166,46 +166,7 @@ class SelfsupervisedPrincipleScene(Scene):
         self.wait(3.5)
 
 
-# ── Embed helper (Jupyter / Quarto) ──────────────────────────────────────────
-_MIME_TYPES = {
-    ".mp4":  "video/mp4",
-    ".webm": "video/webm",
-    ".mov":  "video/quicktime",
-    ".gif":  "image/gif",
-}
-
-
 def selfsupervised_principle_visualization(width: int = 1920) -> None:
-    """Embed the pre-rendered SelfsupervisedPrincipleScene inline.
-
-    The scene must have been rendered first via ``make ssp``.
-    """
-    from IPython.display import HTML, display as _display
-
-    media_root = Path(__file__).parent.parent / "media"
-    matches = [
-        p for p in media_root.rglob("SelfsupervisedPrincipleScene.*")
-        if p.suffix in _MIME_TYPES
-    ]
-    if not matches:
-        raise FileNotFoundError(
-            "No SelfsupervisedPrincipleScene render found under media/. "
-            "Run 'make ssp' before rendering the slides."
-        )
-    media_path = max(matches, key=lambda p: p.stat().st_mtime)
-    try:
-        rel = media_path.relative_to(Path.cwd())
-    except ValueError:
-        rel = media_path
-
-    mime = _MIME_TYPES[media_path.suffix]
-    if media_path.suffix == ".gif":
-        html = f'<img src="{rel}" width="{width}" style="display:block;margin:auto">'
-    else:
-        html = (
-            f'<video width="{width}" autoplay loop muted playsinline controls '
-            f'style="display:block;margin:auto">'
-            f'<source src="{rel}" type="{mime}">'
-            f"</video>"
-        )
-    _display(HTML(html))
+    """Embed the pre-rendered SelfsupervisedPrincipleScene inline."""
+    from ._media import _embed_render
+    _embed_render("SelfsupervisedPrincipleScene", width, __file__)

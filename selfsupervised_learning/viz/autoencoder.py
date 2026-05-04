@@ -245,51 +245,10 @@ class AutoencoderScene(Scene):
         self.wait(4)
 
 
-_MIME_TYPES = {
-    ".mp4":  "video/mp4",
-    ".webm": "video/webm",
-    ".mov":  "video/quicktime",
-    ".gif":  "image/gif",
-}
-
-
 def autoencoder_visualization(width: int = PIXEL_WIDTH) -> None:
-    """Embed the pre-rendered AutoencoderScene inline (Jupyter / Quarto).
-
-    The scene must have been rendered first via ``make ae``.
-    Accepts any format produced by Manim (mp4, webm, mov, gif); the most
-    recently modified file is used automatically.
-    """
-    from pathlib import Path
-    from IPython.display import HTML, display as _display
-
-    media_root = Path(__file__).parent.parent / "media"
-    matches = [
-        p for p in media_root.rglob("AutoencoderScene.*")
-        if p.suffix in _MIME_TYPES
-    ]
-    if not matches:
-        raise FileNotFoundError(
-            "No AutoencoderScene render found under media/. "
-            "Run 'make ae' before rendering the slides."
-        )
-    media_path = max(matches, key=lambda p: p.stat().st_mtime)
-    try:
-        rel = media_path.relative_to(Path.cwd())
-    except ValueError:
-        rel = media_path
-
-    mime = _MIME_TYPES[media_path.suffix]
-    if media_path.suffix == ".gif":
-        html = f'<img src="{rel}" width="{width}" style="display:block;margin:auto">'
-    else:
-        html = (
-            f'<video width="{width}" autoplay loop muted playsinline controls '
-            f'style="display:block;margin:auto">'
-            f'<source src="{rel}" type="{mime}">'
-            f"</video>"
-        )
-    _display(HTML(html))
+    """Embed the pre-rendered AutoencoderScene inline (Jupyter / Quarto)."""
+    from ._media import _embed_render
+    _embed_render("AutoencoderScene", width, __file__)
 
 
 if __name__ == "__main__":
