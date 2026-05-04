@@ -6,4 +6,4 @@ project:
     - rnn/lectures/index.qmd
     - rnn/labs/alphabet.qmd
     - rnn/labs/airplanes.qmd
-    - selfsupervised_learning/lecture.qmd
+    - representation_learning/index.qmd
