@@ -8,4 +8,4 @@ project:
     - good_practices/good_practices_project_design.md
     - cnn/lectures/CNN_lecture_1_classification.qmd
     - cnn/lectures/CNN_lecture_2_segmentation.qmd
-    - representation_learning/lecture.qmd
+    - representation_learning/index.qmd
