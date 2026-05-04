@@ -2397,3 +2397,41 @@ train(model=clip_model, train_loader=train_loader, dev_loader=dev_loader,
 ```{python}
 plot_confusion_matrix(clip_model, dev_data_b, title="Confusion matrix — dev set (CLIP linear probe - after training)")
 ```
+
+# Discussion topics
+
+1. Which self-supervised method comes closest to the supervised CNN on the transfer task?
+2. Does CLIP's zero-shot representation outperform models trained on the same domain without labels? Why might that be surprising — or unsurprising?
+3. Where would you invest effort if you had more unlabeled data but labeling was expensive?
+
+# Summary and key takeaways
+
+This lab explored how neural networks learn to represent data, moving from classical methods to modern self-supervised approaches. Here are the main ideas to take away.
+
+## Representations are shaped by the training objective
+
+The loss function determines what the encoder learns to preserve. A cross-entropy classifier learns features that separate known classes and nothing else. A reconstruction loss preserves everything needed to rebuild the input. A contrastive loss clusters by similarity. None of these is universally best — the right choice depends on the downstream task.
+
+## Supervised representations transfer, but are brittle
+
+A CNN trained on labeled data learns strong features for its training classes. Those features transfer reasonably well to related tasks, but degrade when the transfer domain diverges. The model has no incentive to learn structure beyond what the labels require.
+
+## Self-supervised learning can match supervised learning with enough unlabeled data
+
+Methods like SimCLR and DINO learn from data structure alone — no labels required. With sufficient unlabeled data and well-chosen augmentations they produce representations competitive with supervised ones on transfer tasks. 
+
+## Augmentation design is the core inductive bias in contrastive learning
+
+In SimCLR and DINO, the augmentation pipeline defines what the model is trained to be *invariant* to. Augmenting with color jitter produces color-invariant features; not augmenting with it leaves color as a free dimension. Choosing augmentations that match the invariances relevant to your downstream task is one of the most important practical decisions.
+
+## The projection head is for training; the encoder is for transfer
+
+Both SimCLR and DINO attach a projection head on top of the encoder during self-supervised training, then discard it at transfer time. The projection head specialises to the self-supervised objective; the encoder beneath learns more general features. Evaluating representations at the projection layer consistently underperforms evaluating at the encoder.
+
+## Scale and pretraining distribution matter
+
+CLIP shows that representations trained on a very large, diverse dataset can transfer to narrow domains without any domain-specific training. Breadth of pretraining can compensate for source-target mismatch — up to a point. When the target domain is highly specialised (e.g., histopathology), domain-specific self-supervised pretraining often outperforms generic large-scale models.
+
+## Linear probing is the standard measure of representation quality
+
+Throughout this lab, we evaluated representations by freezing the encoder and training only a linear classifier head. This *linear probe* protocol is the standard benchmark: if a linear classifier can solve the task on top of frozen features, those features are genuinely useful. Fine-tuning always achieves higher accuracy, but it can mask a poor encoder by compensating with gradient updates — making it harder to compare representations fairly.
