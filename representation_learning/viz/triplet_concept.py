@@ -320,9 +320,3 @@ class TripletConceptScene(Scene):
         ).to_edge(DOWN, buff=0.35)
         self.play(FadeIn(note), run_time=0.5)
         self.wait(4.0)
-
-
-def show_triplet_concept(width: int = 800) -> None:
-    """Embed the pre-rendered TripletConceptScene inline (Jupyter / Quarto)."""
-    from ._media import _embed_render
-    _embed_render("TripletConceptScene", width, __file__)

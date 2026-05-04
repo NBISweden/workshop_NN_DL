@@ -253,9 +253,3 @@ class RepresentationCollapseScene(Scene):
         ).to_edge(DOWN, buff=0.)
         self.play(FadeIn(note), run_time=0.8)
         self.wait(4.0)
-
-
-def show_representational_collapse(width: int = 800) -> None:
-    """Embed the pre-rendered RepresentationCollapseScene inline (Jupyter / Quarto)."""
-    from ._media import _embed_render
-    _embed_render("RepresentationCollapseScene", width, __file__)

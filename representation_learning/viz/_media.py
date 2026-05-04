@@ -58,3 +58,23 @@ def _embed_render(scene_name: str, width: int, caller_file: str) -> None:
             f"</video>"
         )
     _display(HTML(html))
+
+
+def show_dot_product(width: int = 700) -> None:
+    _embed_render("DotProductScene", width, __file__)
+
+
+def show_softmax(width: int = 800) -> None:
+    _embed_render("SoftmaxScene", width, __file__)
+
+
+def show_triplet(width: int = 800) -> None:
+    _embed_render("TripletScene", width, __file__)
+
+
+def show_representational_collapse(width: int = 800) -> None:
+    _embed_render("RepresentationCollapseScene", width, __file__)
+
+
+def show_triplet_concept(width: int = 800) -> None:
+    _embed_render("TripletConceptScene", width, __file__)

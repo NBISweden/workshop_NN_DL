@@ -228,9 +228,3 @@ class TripletScene(Scene):
         ).to_edge(DOWN, buff=0.0)
         self.play(FadeIn(note), run_time=0.8)
         self.wait(4.0)
-
-
-def show_triplet(width: int = 800) -> None:
-    """Embed the pre-rendered TripletScene inline (Jupyter / Quarto)."""
-    from ._media import _embed_render
-    _embed_render("TripletScene", width, __file__)

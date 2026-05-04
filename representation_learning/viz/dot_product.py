@@ -137,9 +137,3 @@ class DotProductScene(Scene):
         # ── Return to a nice angle ────────────────────────────────────────────
         self.play(angle.animate.set_value(PI / 4), run_time=1.5, rate_func=smooth)
         self.wait(5.0)
-
-
-def show_dot_product(width: int = 700) -> None:
-    """Embed the pre-rendered DotProductScene inline (Jupyter / Quarto)."""
-    from ._media import _embed_render
-    _embed_render("DotProductScene", width, __file__)
