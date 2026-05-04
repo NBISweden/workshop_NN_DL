@@ -1,6 +1,6 @@
 ---
 title: "Lab session: Representation learning"
-jupyter: 
+jupyter:
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -9,6 +9,8 @@ format:
   html:
     code-fold: true
 description: Representation learning lab.
+session: SSL
+notebook-url: "[representation_learning.ipynb](selfsupervised_learning/labs/representation_learning.ipynb)"
 execute:
   eval: false
 ---
