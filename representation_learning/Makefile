@@ -1,4 +1,4 @@
-LECTURE  = lecture
+LECTURE  = index
 FORMAT  ?= mp4      # override: make FORMAT=gif
 
 VIZ_PY = $(wildcard viz/*.py)
