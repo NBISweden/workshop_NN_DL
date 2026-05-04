@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - labeled
+      - synchronize
+      - opened
 
 jobs:
   build:
@@ -33,11 +38,12 @@ jobs:
       - run: echo "TEXINPUTS=$TEXINPUTS:$GITHUB_WORKSPACE/rnn" >> $GITHUB_ENV
       - run: echo "RETICULATE_PYTHON=${GITHUB_WORKSPACE}/.pixi/envs/teachers/bin/python" >> $GITHUB_ENV
 
-      - name: Render Quarto pages
+      - name: Render Quarto pages without publishing
         run: |
           pixi run render
 
       - name: Upload artifact
+        if: ${{ github.ref_name == 'main' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site  
@@ -55,4 +61,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        if: ${{ github.ref_name == 'main' }}
         uses: actions/deploy-pages@v4
